@@ -104,18 +104,18 @@ fn make_glyphs() {
     let output = Path::new(&env::var_os("OUT_DIR").expect("OUT_DIR")).join("glyphs.rs");
     let mut file = BufWriter::new(File::create(&output).expect("glyphs.rs file"));
 
-    write!(&mut file, "pub static phftable: phf::Map<u32, ()> = ").unwrap();
+    write!(&mut file, "pub static PHFSET: phf::Set<u32> = ").unwrap();
 
-    let mut map = phf_codegen::Map::new();
+    let mut map = phf_codegen::Set::new();
     for glyph in &json.0 {
         let code = glyph.unicode;
-        map.entry(code, "()");
+        map.entry(code);
     }
 
     // Insert shim
-    for &(new, old) in SHIM.iter() {
-        let idx = json.0.binary_search_by_key(&old, |ref g| g.unicode).unwrap();
-        map.entry(new, "()");
+    for &(new, _) in SHIM.iter() {
+        //let idx = json.0.binary_search_by_key(&old, |ref g| g.unicode).unwrap();
+        map.entry(new);
     }
 
     map.build(&mut file).unwrap();

@@ -7,113 +7,20 @@ use test::Bencher;
 
 extern crate fnv;
 extern crate seahash;
-extern crate xxhash2;
+// extern crate xxhash2;
 extern crate murmurhash64;
 
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
 
-use std::cmp;
-use std::hash::Hash;
 use std::hash::Hasher;
-use std::marker::PhantomData;
 
 use std::fmt;
-use std::fmt::Debug;
 use std::fs::File;
 
-const MIN_TABLE_SIZE: usize = 32;
-
-#[derive(Default, Debug)]
-struct Entry<K> {
-  hash: usize,
-  key:  K,
-}
-
-struct Table<K, H> {
-  mask:     usize,
-  entries:  Vec<Entry<K>>,
-  _hasher:   PhantomData<H>,
-}
-
-impl<K, H> Table<K, H>
-    where K: Hash + Default + Eq + Debug,
-          H: Hasher + Default {
-  fn with_capacity(size: u32) -> Table<K, H> {
-    // Table size must be a power of two.
-    let cap = cmp::max((size * 10/9).next_power_of_two() as usize, MIN_TABLE_SIZE);
-    let mut entries = Vec::with_capacity(cap);
-
-    for _ in 0..cap {
-      entries.push(Entry::<K>::default());
-    }
-
-    Table {
-      mask:    cap - 1,
-      entries: entries,
-      _hasher:  PhantomData,
-    }
-  }
-
-  fn insert(&mut self, mut key: K) {
-    // Hash the given key, determine ideal index
-    let mut hash = Self::hash(&key);
-    let mut pos  = hash & self.mask as usize;
-    let mut dist = 0;
-
-    loop {
-      let current_entry = unsafe { self.entries.get_unchecked_mut(pos) };
-
-      // Found an empty bucket.  Place hash and return.
-      if current_entry.hash == 0 {
-        current_entry.hash = hash;
-        current_entry.key =  key;
-        return
-      }
-
-      // Check if current key has an ideal dist less than held hash.
-      // If so, replace current hash with held hash, update new dist
-      // and continue.
-      let ideal = current_entry.hash;
-      let current_dist = pos.wrapping_sub(ideal) & self.mask;
-
-      if current_dist < dist {
-        std::mem::swap(&mut key, &mut current_entry.key);
-        std::mem::swap(&mut hash, &mut current_entry.hash);
-        dist = current_dist;
-      }
-
-      pos = (pos + 1) & self.mask;
-      dist += 1;
-    }
-  }
-
-  fn lookup_index(&self, key: &K) -> Option<(usize, usize)> {
-    let hash = Self::hash(key);
-    let mut pos  = hash & self.mask;
-    let mut dist = 1;
-
-    loop {
-      let current_entry = unsafe { self.entries.get_unchecked(pos) };
-      if current_entry.hash == hash && self.entries[pos].key == *key {
-        return Some((pos, dist))
-      } else if current_entry.hash == 0 {
-        return None
-      }
-
-      pos = (pos + 1) & self.mask;
-      dist += 1;
-    }
-  }
-
-  fn hash(key: &K) -> usize {
-    let mut hasher = H::default();
-    key.hash(&mut hasher);
-    let hash =  hasher.finish() as usize;
-    if hash == 0 { 1 } else { hash }
-  }
-}
+mod hasher;
+use hasher::Table;
 
 #[derive(Deserialize, Debug)]
 struct Glyph {
@@ -208,28 +115,22 @@ fn main() {
 
   make_glyphs!(fnv::FnvHasher);
   make_glyphs!(seahash::SeaHasher);
-  make_glyphs!(xxhash2::State64);
+  // make_glyphs!(xxhash2::State64);
 }
 
-macro_rules! make_glyphs {
-  ($hasher:ty) => ({
-    println!("Hasher: {}", stringify!($hasher));
-    make_glyphs::<$hasher>()
-  })
-}
-
-#[bench]
-fn fnv(b: &mut Bencher) {
+fn bench_hashmap<H>(b: &mut Bencher)
+  where H: Hasher + Default
+{
   let glyph_file = File::open("glyphs.json").unwrap();
-  let json: Glyphs = serde_json::from_reader(&glyph_file).unwrap();
-  let table = make_glyphs!(fnv::FnvHasher);
+  let glyphs: Glyphs =  serde_json::from_reader(&glyph_file).unwrap();
+  let table = make_glyphs::<H>();
 
   b.iter(|| {
     let mut hist = Hist::new();
 
-    for code in json.0.iter() {
+    for code in glyphs.0.iter() {
       if let Some((_, dist)) = table.lookup_index(&code.unicode) {
-        hist.insert(1 as u32);
+        hist.insert(dist as u32);
       }
     }
   })
@@ -237,37 +138,18 @@ fn fnv(b: &mut Bencher) {
 
 #[bench]
 fn seahash(b: &mut Bencher) {
-  let glyph_file = File::open("glyphs.json").unwrap();
-  let json: Glyphs = serde_json::from_reader(&glyph_file).unwrap();
-  let table = make_glyphs!(seahash::SeaHasher);
-
-  b.iter(|| {
-    let mut hist = Hist::new();
-
-    for code in json.0.iter() {
-      if let Some((_, dist)) = table.lookup_index(&code.unicode) {
-        hist.insert(1 as u32);
-      }
-    }
-  })
+  bench_hashmap::<seahash::SeaHasher>(b);
 }
 
 #[bench]
-fn xxhash(b: &mut Bencher) {
-  let glyph_file = File::open("glyphs.json").unwrap();
-  let json: Glyphs = serde_json::from_reader(&glyph_file).unwrap();
-  let table = make_glyphs!(xxhash2::State64);
-
-  b.iter(|| {
-    let mut hist = Hist::new();
-
-    for code in json.0.iter() {
-      if let Some((_, dist)) = table.lookup_index(&code.unicode) {
-        hist.insert(1 as u32);
-      }
-    }
-  })
+fn fnv(b: &mut Bencher) {
+  bench_hashmap::<fnv::FnvHasher>(b);
 }
+
+// #[bench]
+// fn xxhash(b: &mut Bencher) {
+//   bench_hashmap::<xxhash2::State64>();
+// }
 
 include!(concat!(env!("OUT_DIR"), "/glyphs.rs"));
 
@@ -280,7 +162,7 @@ fn phf(b: &mut Bencher) {
     let mut hist = Hist::new();
 
     for code in json.0.iter() {
-      if let Some(_) = phftable.get(&code.unicode) {
+      if PHFSET.contains(&code.unicode) {
         hist.insert(1 as u32);
       }
     }
@@ -313,22 +195,4 @@ impl fmt::Display for Hist {
     }
     Ok(())
   }
-}
-
-impl fmt::Display for Glyph {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,
-            "Glyph {{ unicode: {}, \
-                        bbox: BBox({}, {}, {}, {}), \
-                        advance: {}, \
-                        lsb: {}, \
-                        italics: {}, \
-                        attachment: {} }}",
-            self.unicode,
-            self.min_x, self.min_y, self.max_x, self.max_y,
-            self.advance,
-            self.lsb,
-            self.italics,
-            self.attachment)
-    }
 }

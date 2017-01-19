@@ -7,7 +7,6 @@ build = "build.rs"
 [dependencies]
 fnv = "1.0.5"
 seahash = "3.0.5"
-xxhash2 = "0.1"
 murmurhash64 = "0.3"
 serde = "0.8"
 serde_json = "0.8"
