@@ -1,0 +1,21 @@
+[package]
+name = "static-map"
+version = "0.1.0"
+authors = ["Christopher Breeden <github@u.breeden.cc>"]
+build = "build.rs"
+
+[dependencies]
+fnv = "1.0.5"
+seahash = "3.0.5"
+xxhash2 = "0.1"
+murmurhash64 = "0.3"
+serde = "0.8"
+serde_json = "0.8"
+serde_derive = "0.8"
+phf="0.7"
+
+[build-dependencies]
+phf_codegen="0.7"
+serde = "0.8"
+serde_json = "0.8"
+serde_derive = "0.8"
