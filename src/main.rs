@@ -1,7 +1,6 @@
 #![feature(test)]
 #![allow(dead_code)]
 extern crate phf;
-
 extern crate test;
 use test::Bencher;
 
@@ -19,8 +18,10 @@ use std::hash::Hasher;
 use std::fmt;
 use std::fs::File;
 
+mod fxhash;
 mod hasher;
-use hasher::Table;
+use hasher::{Table, Entry};
+use hasher::StaticHashSet;
 
 #[derive(Deserialize, Debug)]
 struct Glyph {
@@ -136,9 +137,14 @@ fn bench_hashmap<H>(b: &mut Bencher)
   })
 }
 
+// #[bench]
+// fn seahash(b: &mut Bencher) {
+//   bench_hashmap::<seahash::SeaHasher>(b);
+// }
+
 #[bench]
-fn seahash(b: &mut Bencher) {
-  bench_hashmap::<seahash::SeaHasher>(b);
+fn fxhasher(b: &mut Bencher) {
+  bench_hashmap::<fxhash::FxHasher>(b);
 }
 
 #[bench]
@@ -151,7 +157,26 @@ fn fnv(b: &mut Bencher) {
 //   bench_hashmap::<xxhash2::State64>();
 // }
 
+// FNV_STATIC_SET
+// PNFSET
 include!(concat!(env!("OUT_DIR"), "/glyphs.rs"));
+include!(concat!(env!("OUT_DIR"), "/fnv_static.rs"));
+
+#[bench]
+fn static_fnv(b: &mut Bencher) {
+  let glyph_file = File::open("glyphs.json").unwrap();
+  let json: Glyphs = serde_json::from_reader(&glyph_file).unwrap();
+
+  b.iter(|| {
+    let mut hist = Hist::new();
+
+    for glyph in json.0.iter() {
+      if let Some((_, dist)) = FNV_STATIC_SET.lookup_index(&glyph.unicode) {
+        hist.insert(dist as u32)
+      }
+    }
+  })
+}
 
 #[bench]
 fn phf(b: &mut Bencher) {

@@ -1,58 +1,24 @@
 use std::cmp;
+use std::fmt::Debug;
+use std::fmt::Display;
+use std::fmt;
 use std::hash::Hash;
 use std::hash::Hasher;
-use std::fmt::Debug;
-use std::mem;
-
 use std::marker::PhantomData;
+use std::mem;
 
 const MIN_TABLE_SIZE: usize = 32;
 
 #[derive(Default, Debug)]
 pub struct Entry<K> {
-  pub hash: usize,
-  pub key:  K,
+  hash: usize,
+  key:  K,
 }
 
 pub struct Table<K, H> {
   mask:     usize,
-  entries:  Vec<Entry<K>>,
+  pub entries:  Vec<Entry<K>>,
   _hasher:   PhantomData<H>,
-}
-
-pub struct StaticHashSet<K: 'static, H> {
-  pub mask:    usize,
-  pub entries: &'static [Entry<K>],
-  pub _hasher: PhantomData<H>,
-}
-
-impl<K, H> StaticHashSet<K, H>
-    where K: Hash + Default + Eq + Debug,
-          H: Hasher + Default {
-  pub fn lookup_index(&self, key: &K) -> Option<(usize, usize)> {
-    let hash = Self::hash(key);
-    let mut pos  = hash & self.mask;
-    let mut dist = 1;
-
-    loop {
-      let current_entry = unsafe { self.entries.get_unchecked(pos) };
-      if current_entry.hash == hash && self.entries[pos].key == *key {
-        return Some((pos, dist))
-      } else if current_entry.hash == 0 {
-        return None
-      }
-
-      pos = (pos + 1) & self.mask;
-      dist += 1;
-    }
-  }
-
-  fn hash(key: &K) -> usize {
-    let mut hasher = H::default();
-    key.hash(&mut hasher);
-    let hash =  hasher.finish() as usize;
-    if hash == 0 { 1 } else { hash }
-  }
 }
 
 impl<K, H> Table<K, H>
@@ -131,4 +97,10 @@ impl<K, H> Table<K, H>
     let hash =  hasher.finish() as usize;
     if hash == 0 { 1 } else { hash }
   }
+}
+
+impl<K: Display> fmt::Display for Entry<K> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Entry {{ hash: {}, key: {} }}", self.hash, self.key)
+    }
 }

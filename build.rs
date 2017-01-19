@@ -3,6 +3,7 @@ extern crate phf_codegen;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
+extern crate fnv;
 
 use std::env;
 use std::fmt;
@@ -11,8 +12,13 @@ use std::io::{BufWriter, Write};
 use std::io::Read;
 use std::path::Path;
 
+mod fxhash;
+mod static_hash;
+use static_hash::Table;
+
 fn main() {
-    make_glyphs();
+    make_phfset();
+    make_fnvstatic();
 }
 
 #[derive(Deserialize, Debug)]
@@ -90,7 +96,7 @@ const SHIM: [(u32, u32); 24] = [
     (0x1D455, 0x210E), // h
 ];
 
-fn make_glyphs() {
+fn make_phfset() {
     // Read glyph data from `build/glyphs.json`
     let mut glyph_file = File::open("glyphs.json")
         .expect("Unable to open build/glyphs.json");
@@ -120,4 +126,38 @@ fn make_glyphs() {
 
     map.build(&mut file).unwrap();
     write!(&mut file, ";\n").unwrap();
+}
+
+fn make_fnvstatic() {
+    // Read glyph data from `build/glyphs.json`
+    let glyph_file = File::open("glyphs.json").unwrap();
+    let json: Glyphs = serde_json::from_reader(&glyph_file).unwrap();
+
+    let size = json.0.len() as u32 + SHIM.len() as u32;
+    let mut t = Table::<u32, fxhash::FxHasher>::with_capacity(size);
+
+    for glyph in json.0.iter().take(size as usize) {
+        t.insert(glyph.unicode);
+    }
+
+    // Insert shim
+    for &(_, old) in SHIM.iter() {
+        let idx = json.0.binary_search_by_key(&old, |ref g| g.unicode).unwrap();
+        t.insert(json.0[idx].unicode)
+    }
+
+    // Write Static Hash
+    let output = Path::new(&env::var_os("OUT_DIR").expect("OUT_DIR")).join("fnv_static.rs");
+    let mut file = BufWriter::new(File::create(&output).expect("glyphs.rs file"));
+
+    write!(&mut file, "static FNV_STATIC_SET: StaticHashSet<u32, fxhash::FxHasher> = StaticHashSet {{  \
+                         mask: {},  \
+                         entries: &[", t.entries.len() - 1).unwrap();
+    for entry in t.entries {
+        write!(&mut file, "{}, ", entry);
+    }
+
+    write!(&mut file, "  ],").unwrap();
+    write!(&mut file, "  _hasher: ::std::marker::PhantomData,").unwrap();
+    write!(&mut file, "}};").unwrap();
 }
