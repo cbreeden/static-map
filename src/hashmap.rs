@@ -11,7 +11,8 @@ pub struct Entry<K, V> {
 }
 
 pub struct Map<K: 'static, V: 'static, H: Hasher> {
-  pub entries:  &'static [Entry<K, V>],
+  pub hashes:   &'static [usize],
+  pub entries:  &'static [(K, V)],
   pub _hasher:  PhantomData<H>,
 }
 
@@ -33,15 +34,18 @@ impl<K, V, H> Map<K, V, H>
     let mut dist = 0;
 
     loop {
-      let entry = unsafe { self.entries.get_unchecked(pos) };
-      if entry.hash == hash && entry.key == *key {
-        return Some(&entry.value)
+      let &entry_hash = unsafe { self.hashes.get_unchecked(pos) };
+      if entry_hash == hash {
+        let entry = unsafe { self.entries.get_unchecked(pos) };
+        if entry.0 == *key {
+          return Some(&entry.1)
+        }
       }
 
-      if entry.hash == 0 { return None }
+      if entry_hash == 0 { return None }
 
       // Compare this to just taking dist > entry.max_dist
-      let entry_dist = pos.wrapping_sub(entry.hash) & mask;
+      let entry_dist = pos.wrapping_sub(entry_hash) & mask;
       if dist > entry_dist { return None }
 
       pos = (pos + 1) & mask;
@@ -58,25 +62,25 @@ impl<K, V, H> Map<K, V, H>
 //  pub fn contains_key<Q: ?Sized>(&self, k: &Q) -> bool ... {}
 //# pub fn get_mut<Q: ..>(&mut self, k: &Q) -> Option<&mut V> ... {}
 
-  #[cfg(test)]
-  pub fn lookup_dist(&self, key: &K) -> usize {
-    let mask = self.entries.len() - 1;
-    let hash = Self::hash(key);
-    let mut pos  = hash & mask;
-    let mut dist = 1;
+  // #[cfg(test)]
+  // pub fn lookup_dist(&self, key: &K) -> usize {
+  //   let mask = self.entries.len() - 1;
+  //   let hash = Self::hash(key);
+  //   let mut pos  = hash & mask;
+  //   let mut dist = 1;
 
-    loop {
-      let current_entry = unsafe { self.entries.get_unchecked(pos) };
-      if current_entry.hash == hash && self.entries[pos].key == *key {
-        return dist
-      } else if current_entry.hash == 0 {
-        panic!("Unable to find key")
-      }
+  //   loop {
+  //     let current_entry = unsafe { self.entries.get_unchecked(pos) };
+  //     if current_entry.hash == hash && self.entries[pos].key == *key {
+  //       return dist
+  //     } else if current_entry.hash == 0 {
+  //       panic!("Unable to find key")
+  //     }
 
-      pos = (pos + 1) & mask;
-      dist += 1;
-    }
-  }
+  //     pos = (pos + 1) & mask;
+  //     dist += 1;
+  //   }
+  // }
 
   fn hash(key: &K) -> usize {
     let mut hasher = H::default();

@@ -12,13 +12,8 @@ extern crate serde_json;
 #[macro_use]
 extern crate lazy_static;
 
-//extern crate seahash;
-//extern crate xxhash2;
-//extern crate murmurhash64;
-
 mod fxhash;
 mod hashmap;
-mod hashbuilder;
 mod testdata;
 mod hist;
 
@@ -37,9 +32,28 @@ include!(concat!(env!("OUT_DIR"), "/phf.rs"));
 // FX_GLYPHS
 include!(concat!(env!("OUT_DIR"), "/fx.rs"));
 
+// FX_INLINE_MAP
+include!(concat!(env!("OUT_DIR"), "/fx_inline.rs"));
+
 // FNV_MAP
 // FNV_GLYPHS
 include!(concat!(env!("OUT_DIR"), "/fnv.rs"));
+
+#[bench]
+fn fx_inline(b: &mut Bencher) {
+  b.iter(|| {
+    let mut count = 0;
+    for &(code, glyph) in GLYPHS.iter() {
+      if let Some(&g) = FX_INLINE_MAP.get(&code) {
+        if g.unicode != glyph.unicode {
+          panic!("");
+        }
+      }
+    }
+
+    count
+  })
+}
 
 #[bench]
 fn fx(b: &mut Bencher) {
@@ -48,8 +62,8 @@ fn fx(b: &mut Bencher) {
     for &(code, glyph) in GLYPHS.iter() {
       if let Some(&idx) = FX_MAP.get(&code) {
         let g = FX_GLYPHS[idx];
-        if g.unicode == glyph.unicode {
-          count +=1 ;
+        if g.unicode != glyph.unicode {
+          panic!("");
         }
       }
     }
@@ -65,8 +79,8 @@ fn fnv(b: &mut Bencher) {
     for &(code, glyph) in GLYPHS.iter() {
       if let Some(&idx) = FNV_MAP.get(&code) {
         let g = FNV_GLYPHS[idx];
-        if g.unicode == glyph.unicode {
-          count +=1 ;
+        if g.unicode != glyph.unicode {
+          panic!("");
         }
       }
     }

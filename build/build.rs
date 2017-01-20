@@ -24,6 +24,7 @@ fn main() {
     make_phfset();
     make_fnvstatic();
     make_fxstatic();
+    make_fxinline();
 }
 
 macro_rules! display {
@@ -56,16 +57,8 @@ fn make_fxstatic() {
         g.push(glyph);
     }
 
-    write!(&mut file, "static FX_MAP: Map<u32, usize, fxhash::FxHasher> = Map {{  \
-                         entries: &[").unwrap();
-    for entry in t.entries.iter() {
-        write!(&mut file, "{}, ", entry).unwrap();
-    }
-
-    write!(&mut file, "  ],\n").unwrap();
-
-    write!(&mut file, "  _hasher: ::std::marker::PhantomData,").unwrap();
-    write!(&mut file, "}};\n\n").unwrap();
+    write!(&mut file, "static FX_MAP: Map<u32, usize, fxhash::FxHasher> = ").unwrap();
+    t.build(&mut file).unwrap();
 
     write!(&mut file, "static FX_GLYPHS: [Glyph; {}] = [", g.len()).unwrap();
 
@@ -88,16 +81,8 @@ fn make_fnvstatic() {
         g.push(glyph);
     }
 
-    write!(&mut file, "static FNV_MAP: Map<u32, usize, fnv::FnvHasher> = Map {{  \
-                         entries: &[").unwrap();
-    for entry in t.entries.iter() {
-        write!(&mut file, "{}, ", entry).unwrap();
-    }
-
-    write!(&mut file, "  ],\n").unwrap();
-
-    write!(&mut file, "  _hasher: ::std::marker::PhantomData,").unwrap();
-    write!(&mut file, "}};\n\n").unwrap();
+    write!(&mut file, "static FNV_MAP: Map<u32, usize, fxhash::FxHasher> = ").unwrap();
+    t.build(&mut file).unwrap();
 
     write!(&mut file, "static FNV_GLYPHS: [Glyph; {}] = [", g.len()).unwrap();
 
@@ -106,4 +91,18 @@ fn make_fnvstatic() {
     }
 
     write!(&mut file, "];").unwrap();
+}
+
+fn make_fxinline() {
+    let output = Path::new(&env::var_os("OUT_DIR").expect("OUT_DIR")).join("fx_inline.rs");
+    let mut file = BufWriter::new(File::create(&output).expect("fx_inline.rs file"));
+
+    let mut t = Table::<u32, Glyph, fxhash::FxHasher>::with_capacity(GLYPHS.len() as u32);
+
+    for &(code, glyph) in GLYPHS.iter() {
+        t.insert(code, glyph);
+    }
+
+    write!(&mut file, "static FX_INLINE_MAP: Map<u32, Glyph, fxhash::FxHasher> = ").unwrap();
+    t.build(&mut file).unwrap();
 }
