@@ -22,7 +22,7 @@ use static_hash::Table;
 
 fn main() {
     make_phfset();
-    // make_fnvstatic();
+    make_fnvstatic();
     make_fxstatic();
 }
 
@@ -67,7 +67,39 @@ fn make_fxstatic() {
     write!(&mut file, "  _hasher: ::std::marker::PhantomData,").unwrap();
     write!(&mut file, "}};\n\n").unwrap();
 
-    write!(&mut file, "static GLYPHS_ARRAY: [Glyph; {}] = [", g.len()).unwrap();
+    write!(&mut file, "static FX_GLYPHS: [Glyph; {}] = [", g.len()).unwrap();
+
+    for glyph in g {
+        write!(&mut file, "{}, ", glyph).unwrap();
+    }
+
+    write!(&mut file, "];").unwrap();
+}
+
+fn make_fnvstatic() {
+    let output = Path::new(&env::var_os("OUT_DIR").expect("OUT_DIR")).join("fnv.rs");
+    let mut file = BufWriter::new(File::create(&output).expect("fnv.rs file"));
+
+    let mut g: Vec<Glyph> = Vec::new();
+    let mut t = Table::<u32, usize, fnv::FnvHasher>::with_capacity(GLYPHS.len() as u32);
+
+    for &(code, glyph) in GLYPHS.iter() {
+        t.insert(code, g.len());
+        g.push(glyph);
+    }
+
+    write!(&mut file, "static FNV_MAP: Map<u32, usize, fnv::FnvHasher> = Map {{  \
+                         entries: &[").unwrap();
+    for entry in t.entries.iter() {
+        write!(&mut file, "{}, ", entry).unwrap();
+    }
+
+    write!(&mut file, "  ],\n").unwrap();
+
+    write!(&mut file, "  _hasher: ::std::marker::PhantomData,").unwrap();
+    write!(&mut file, "}};\n\n").unwrap();
+
+    write!(&mut file, "static FNV_GLYPHS: [Glyph; {}] = [", g.len()).unwrap();
 
     for glyph in g {
         write!(&mut file, "{}, ", glyph).unwrap();

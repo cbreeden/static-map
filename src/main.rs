@@ -34,8 +34,12 @@ use testdata::GLYPHS;
 include!(concat!(env!("OUT_DIR"), "/phf.rs"));
 
 // FX_MAP
-// GLYPHS_ARRAY
+// FX_GLYPHS
 include!(concat!(env!("OUT_DIR"), "/fx.rs"));
+
+// FNV_MAP
+// FNV_GLYPHS
+include!(concat!(env!("OUT_DIR"), "/fnv.rs"));
 
 #[bench]
 fn fx(b: &mut Bencher) {
@@ -43,7 +47,24 @@ fn fx(b: &mut Bencher) {
     let mut count = 0;
     for &(code, glyph) in GLYPHS.iter() {
       if let Some(&idx) = FX_MAP.get(&code) {
-        let g = GLYPHS_ARRAY[idx];
+        let g = FX_GLYPHS[idx];
+        if g.unicode == glyph.unicode {
+          count +=1 ;
+        }
+      }
+    }
+
+    count
+  })
+}
+
+#[bench]
+fn fnv(b: &mut Bencher) {
+  b.iter(|| {
+    let mut count = 0;
+    for &(code, glyph) in GLYPHS.iter() {
+      if let Some(&idx) = FNV_MAP.get(&code) {
+        let g = FNV_GLYPHS[idx];
         if g.unicode == glyph.unicode {
           count +=1 ;
         }
