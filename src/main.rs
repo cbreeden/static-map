@@ -17,12 +17,12 @@ mod hashmap;
 mod testdata;
 mod hist;
 
-use std::fmt;
-
+#[cfg(test)]
 use test::Bencher;
 
-use hashmap::{Entry, Map};
+use hashmap::Map;
 use testdata::Glyph;
+#[cfg(test)]
 use testdata::GLYPHS;
 
 // PFH_MAP
@@ -42,7 +42,6 @@ include!(concat!(env!("OUT_DIR"), "/fnv.rs"));
 #[bench]
 fn fx_inline(b: &mut Bencher) {
   b.iter(|| {
-    let mut count = 0;
     for &(code, glyph) in GLYPHS.iter() {
       if let Some(&g) = FX_INLINE_MAP.get(&code) {
         if g.unicode != glyph.unicode {
@@ -50,15 +49,12 @@ fn fx_inline(b: &mut Bencher) {
         }
       }
     }
-
-    count
   })
 }
 
 #[bench]
 fn fx(b: &mut Bencher) {
   b.iter(|| {
-    let mut count = 0;
     for &(code, glyph) in GLYPHS.iter() {
       if let Some(&idx) = FX_MAP.get(&code) {
         let g = FX_GLYPHS[idx];
@@ -67,15 +63,13 @@ fn fx(b: &mut Bencher) {
         }
       }
     }
-
-    count
   })
 }
 
 #[bench]
 fn fnv(b: &mut Bencher) {
   b.iter(|| {
-    let mut count = 0;
+
     for &(code, glyph) in GLYPHS.iter() {
       if let Some(&idx) = FNV_MAP.get(&code) {
         let g = FNV_GLYPHS[idx];
@@ -84,22 +78,17 @@ fn fnv(b: &mut Bencher) {
         }
       }
     }
-
-    count
   })
 }
 
 #[bench]
 fn phf(b: &mut Bencher) {
   b.iter(|| {
-    let mut count = 0;
     for &(code, glyph) in GLYPHS.iter() {
-      if PHF_MAP.get(&code).unwrap().unicode == glyph.unicode {
-        count += 1;
+      if PHF_MAP.get(&code).unwrap().unicode != glyph.unicode {
+        panic!("")
       }
     }
-
-    count
   })
 }
 
