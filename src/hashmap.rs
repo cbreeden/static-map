@@ -35,7 +35,7 @@ impl<K, V, H> Map<K, V, H>
     loop {
       let entry = unsafe { self.entries.get_unchecked(pos) };
       if entry.hash == hash && entry.key == *key {
-        return unsafe { Some(&entry.value) }
+        return Some(&entry.value)
       }
 
       if entry.hash == 0 { return None }

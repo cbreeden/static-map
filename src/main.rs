@@ -30,78 +30,43 @@ use hashmap::{Entry, Map};
 use testdata::Glyph;
 use testdata::GLYPHS;
 
-// fn bench_hashmap<H>(hasher: H, b: &mut Bencher)
-//   where H: Hasher + Default
-// {
-//   let glyphs: Glyphs =  serde_json::from_reader(&glyph_file).unwrap();
-//   let table = make_glyphs::<H>();
+// PFH_MAP
+include!(concat!(env!("OUT_DIR"), "/phf.rs"));
 
-//   b.iter(|| {
-//     let mut hist = Hist::new();
-
-//     for code in glyphs.0.iter() {
-//       if let Some((_, dist)) = table.lookup_index(&code.unicode) {
-//         hist.insert(dist as u32);
-//       }
-//     }
-//   })
-// }
-
-// #[bench]
-// fn fxhasher(b: &mut Bencher) {
-//   bench_hashmap::<fxhash::FxHasher>(b);
-// }
-
-// #[bench]
-// fn fnv(b: &mut Bencher) {
-//   bench_hashmap::<fnv::FnvHasher>(b);
-// }
-
-// FNV_STATIC_SET
-// PNFSET
-// include!(concat!(env!("OUT_DIR"), "/glyphs.rs"));
+// FX_MAP
+// GLYPHS_ARRAY
 include!(concat!(env!("OUT_DIR"), "/fx.rs"));
 
 #[bench]
 fn fx(b: &mut Bencher) {
   b.iter(|| {
+    let mut count = 0;
     for &(code, glyph) in GLYPHS.iter() {
-      assert_eq!(*FX_MAP.get(&code).unwrap(), glyph)
+      if let Some(&idx) = FX_MAP.get(&code) {
+        let g = GLYPHS_ARRAY[idx];
+        if g.unicode == glyph.unicode {
+          count +=1 ;
+        }
+      }
     }
+
+    count
   })
 }
 
-// #[bench]
-// fn static_fnv(b: &mut Bencher) {
-//   let glyph_file = File::open("glyphs.json").unwrap();
-//   let json: Glyphs = serde_json::from_reader(&glyph_file).unwrap();
+#[bench]
+fn phf(b: &mut Bencher) {
+  b.iter(|| {
+    let mut count = 0;
+    for &(code, glyph) in GLYPHS.iter() {
+      if PHF_MAP.get(&code).unwrap().unicode == glyph.unicode {
+        count += 1;
+      }
+    }
 
-//   b.iter(|| {
-//     let mut hist = Hist::new();
-
-//     for glyph in json.0.iter() {
-//       if let Some((_, dist)) = FNV_STATIC_SET.lookup_index(&glyph.unicode) {
-//         hist.insert(dist as u32)
-//       }
-//     }
-//   })
-// }
-
-// #[bench]
-// fn phf(b: &mut Bencher) {
-//   let glyph_file = File::open("glyphs.json").unwrap();
-//   let json: Glyphs = serde_json::from_reader(&glyph_file).unwrap();
-
-//   b.iter(|| {
-//     let mut hist = Hist::new();
-
-//     for code in json.0.iter() {
-//       if PHFSET.contains(&code.unicode) {
-//         hist.insert(1 as u32);
-//       }
-//     }
-//   })
-// }
+    count
+  })
+}
 
 fn main() {
   println!("I'm only used for tests, I should probably be a library.")
