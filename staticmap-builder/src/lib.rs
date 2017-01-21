@@ -5,6 +5,7 @@ use std::fmt;
 use std::fmt::Display;
 use std::hash::Hash;
 use std::hash::Hasher;
+use std::hash::BuildHasher;
 use std::io;
 
 const MIN_TABLE_SIZE: usize = 32;
@@ -15,18 +16,18 @@ pub struct Entry<K, V> {
   pub value: V,
 }
 
-pub struct Table<K, V, H> {
-  pub hashes: Vec<usize>,
+pub struct Builder<K, V, S> {
+  pub hashes:  Vec<usize>,
   pub entries: Vec<Entry<K, V>>,
-  _hasher: PhantomData<H>,
+  pub hasher:  S,
 }
 
-impl<K, V, H> Table<K, V, H>
+impl<K, V, S> Builder<K, V, S>
     where K: Hash + Default + Eq + Display,
-          H: Hasher + Default,
-          V: Default + Display {
-  pub fn with_capacity(size: u32) -> Table<K, V, H> {
-    // Table size must be a power of two.
+          V: Default + Display,
+          S: BuildHasher {
+  pub fn with_capacity(size: u32, hasher: S) -> Builder<K, V, S> {
+    // Builder size must be a power of two.
     let cap = cmp::max((size * 10/9).next_power_of_two() as usize, MIN_TABLE_SIZE);
     let mut entries = Vec::with_capacity(cap);
 
@@ -34,15 +35,15 @@ impl<K, V, H> Table<K, V, H>
       entries.push(Entry::<K, V>::default());
     }
 
-    Table {
+    Builder {
       hashes:  vec![0; cap],
       entries: entries,
-      _hasher: PhantomData,
+      hasher:  hasher,
     }
   }
 
-  pub fn insert(&mut self, key: K, value: V) {
-    let mut hash = Self::hash(&key);
+  pub fn insert(&mut self, key: K, value: V) -> usize {
+    let mut hash = self.hash(&key);
     let mask = self.entries.len() - 1;
 
     let mut entry = Entry {
@@ -64,7 +65,7 @@ impl<K, V, H> Table<K, V, H>
           let probe = self.entries.get_unchecked_mut(pos);
           *probe = entry;
         }
-        return
+        return dist
       }
 
       // Check if current key has an ideal dist less than held hash.
@@ -106,8 +107,8 @@ impl<K, V, H> Table<K, V, H>
     write!(f, "}};\n\n")
   }
 
-  fn hash(key: &K) -> usize {
-    let mut hasher = H::default();
+  fn hash(&self, key: &K) -> usize {
+    let mut hasher = self.hasher.build_hasher();
     key.hash(&mut hasher);
     let hash =  hasher.finish() as usize;
     if hash == 0 { 1 } else { hash }
@@ -117,7 +118,6 @@ impl<K, V, H> Table<K, V, H>
 impl<K, V> fmt::Display for Entry<K, V>
     where K: fmt::Display, V: fmt::Display {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    write!(f, "({}, {})",
-      self.key, self.value)
+    write!(f, "({}, {})", self.key, self.value)
   }
 }

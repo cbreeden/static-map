@@ -1,24 +1,16 @@
 use std::hash::Hash;
 use std::hash::Hasher;
+use std::hash::BuildHasher;
 use std::fmt::Debug;
 use std::marker::PhantomData;
 
-#[derive(Default, Debug)]
-pub struct Entry<K, V> {
-  pub hash:  usize,
-  pub key:   K,
-  pub value: V,
-}
-
-pub struct Map<K: 'static, V: 'static, H: Hasher> {
+pub struct Map<K: 'static, V: 'static, S: BuildHasher> {
+  pub hasher:   S,
   pub hashes:   &'static [usize],
   pub entries:  &'static [(K, V)],
-  pub _hasher:  PhantomData<H>,
 }
 
-impl<K, V, H> Map<K, V, H>
-    where K: Hash + Default + Eq + Debug,
-          H: Hasher + Default {
+impl<K, V, S> Map<K, V, S> where K: Hash + Eq, S: BuildHasher {
   pub fn len(&self) -> usize {
     self.entries.len()
   }
@@ -83,7 +75,7 @@ impl<K, V, H> Map<K, V, H>
   // }
 
   fn hash(key: &K) -> usize {
-    let mut hasher = H::default();
+    let mut hasher = self.hasher.build_hasher();
     key.hash(&mut hasher);
     let hash =  hasher.finish() as usize;
     if hash == 0 { 1 } else { hash }

@@ -19,3 +19,5 @@ serde_json = "0.8"
 serde_derive = "0.8"
 fnv = "1.0"
 lazy_static = "0.2.2"
+staticmap-builder = { path = "staticmap-builder" }
+staticmap_hashers = { path = "staticmap_hashers" }

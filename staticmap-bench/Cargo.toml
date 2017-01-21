@@ -1,0 +1,13 @@
+[package]
+name = "staticmap-bench"
+version = "0.1.0"
+authors = ["Christopher Breeden <github@u.breeden.cc>"]
+
+[dependencies]
+serde = "0.8"
+serde_json = "0.8"
+serde_derive = "0.8"
+staticmap-builder = { path = "../staticmap-builder" }
+staticmap_hashers = { path = "../staticmap_hashers" }
+rand = "0.3"
+rayon = "0.6"

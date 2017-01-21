@@ -7,24 +7,17 @@
 // <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
+#![allow(dead_code)]
 
 use std::collections::{HashMap, HashSet};
 use std::default::Default;
-use std::hash::{Hasher, Hash, BuildHasherDefault};
+use std::hash::{ Hasher, Hash, BuildHasher };
 use std::ops::BitXor;
 
-pub type FxHashMap<K, V> = HashMap<K, V, BuildHasherDefault<FxHasher>>;
-pub type FxHashSet<V> = HashSet<V, BuildHasherDefault<FxHasher>>;
-
-#[allow(non_snake_case)]
-pub fn FxHashMap<K: Hash + Eq, V>() -> FxHashMap<K, V> {
-    HashMap::default()
-}
-
-#[allow(non_snake_case)]
-pub fn FxHashSet<V: Hash + Eq>() -> FxHashSet<V> {
-    HashSet::default()
-}
+#[cfg(target_pointer_width = "32")]
+const K: usize = 0x9e3779b9;
+#[cfg(target_pointer_width = "64")]
+const K: usize = 0x517cc1b727220a95;
 
 /// A speedy hash algorithm for use within rustc. The hashmap in libcollections
 /// by default uses SipHash which isn't quite as speedy as we want. In the
@@ -38,25 +31,49 @@ pub fn FxHashSet<V: Hash + Eq>() -> FxHashSet<V> {
 /// similar or slightly worse than FNV, but the speed of the hash function
 /// itself is much higher because it works on up to 8 bytes at a time.
 pub struct FxHasher {
+    key:  usize,
     hash: usize
 }
 
-#[cfg(target_pointer_width = "32")]
-const K: usize = 0x9e3779b9;
-#[cfg(target_pointer_width = "64")]
-const K: usize = 0x517cc1b727220a95;
+pub struct FxHashBuilder {
+    key:  usize,
+}
+
+impl BuildHasher for FxHashBuilder {
+    type Hasher = FxHasher;
+    fn build_hasher(&self) -> Self::Hasher {
+        FxHasher::with_key(self.key)
+    }
+}
+
+impl Default for FxHashBuilder {
+    fn default() -> FxHashBuilder {
+        FxHashBuilder { key: K }
+    }
+}
+
+impl FxHashBuilder {
+    pub fn with_key(key: usize) -> FxHashBuilder {
+        FxHashBuilder { key: key }
+    }
+}
 
 impl Default for FxHasher {
     #[inline]
     fn default() -> FxHasher {
-        FxHasher { hash: 0 }
+        FxHasher { key: K, hash: 0 }
     }
 }
 
 impl FxHasher {
     #[inline]
     fn add_to_hash(&mut self, i: usize) {
-        self.hash = self.hash.rotate_left(5).bitxor(i).wrapping_mul(K);
+        self.hash = self.hash.rotate_left(5).bitxor(i).wrapping_mul(self.key);
+    }
+
+    #[inline]
+    fn with_key(key: usize) -> FxHasher {
+        FxHasher { key: key, hash: 0 }
     }
 }
 
