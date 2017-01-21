@@ -22,10 +22,10 @@ use staticmap_builder::Builder;
 use staticmap_hashers::fxhash;
 
 fn main() {
-    // make_phfset();
+    make_phfset();
     // make_fnvstatic();
     make_fxstatic();
-    make_fxinline();
+    // make_fxinline();
 }
 
 macro_rules! display {
@@ -58,7 +58,7 @@ fn make_fxstatic() {
         g.push(glyph);
     }
 
-    write!(&mut file, "static FX_MAP: Map<u32, usize, fxhash::FxHasher> = ").unwrap();
+    write!(&mut file, "static FX_MAP: Map<u32, usize, fxhash::FxHashBuilder> = ").unwrap();
     t.build(&mut file).unwrap();
 
     write!(&mut file, "static FX_GLYPHS: [Glyph; {}] = [", g.len()).unwrap();
@@ -94,16 +94,16 @@ fn make_fxstatic() {
 //     write!(&mut file, "];").unwrap();
 // }
 
-fn make_fxinline() {
-    let output = Path::new(&env::var_os("OUT_DIR").expect("OUT_DIR")).join("fx_inline.rs");
-    let mut file = BufWriter::new(File::create(&output).expect("fx_inline.rs file"));
+// fn make_fxinline() {
+//     let output = Path::new(&env::var_os("OUT_DIR").expect("OUT_DIR")).join("fx_inline.rs");
+//     let mut file = BufWriter::new(File::create(&output).expect("fx_inline.rs file"));
 
-    let mut t = Builder::<u32, Glyph, _>::with_capacity(GLYPHS.len() as u32, fxhash::FxHashBuilder::default());
+//     let mut t = Builder::<u32, Glyph, _>::with_capacity(GLYPHS.len() as u32, fxhash::FxHashBuilder::default());
 
-    for &(code, glyph) in GLYPHS.iter() {
-        t.insert(code, glyph);
-    }
+//     for &(code, glyph) in GLYPHS.iter() {
+//         t.insert(code, glyph);
+//     }
 
-    write!(&mut file, "static FX_INLINE_MAP: Map<u32, Glyph, fxhash::FxHasher> = ").unwrap();
-    t.build(&mut file).unwrap();
-}
+//     write!(&mut file, "static FX_INLINE_MAP: Map<u32, Glyph, _> = ").unwrap();
+//     t.build(&mut file).unwrap();
+// }

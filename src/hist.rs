@@ -1,13 +1,13 @@
 use std::fmt;
 
-struct Hist(Vec<u32>);
+pub struct Hist(Vec<u32>);
 
 impl Hist {
-  fn new() -> Hist {
+  pub fn new() -> Hist {
     Hist(Vec::new())
   }
 
-  fn insert(&mut self, val: u32) {
+  pub fn insert(&mut self, val: u32) {
     if val < self.0.len() as u32 {
       self.0[val as usize] += 1;
     } else {
@@ -18,18 +18,19 @@ impl Hist {
     }
   }
 
-  fn average(&self) -> f32 {
+  pub fn average(&self) -> f32 {
     self.0.iter()
       .enumerate()
-      .map(|(idx, &count)| (idx + 1) * count)
-      .sum() as f32 / (self.0.len() as f32)
-  }
+      .map(|(idx, &count)| (idx as usize) * (count as usize))
+      .sum::<usize>() as f32 /
+        self.0.iter().cloned().sum::<u32>() as f32
+    }
 }
 
 impl fmt::Display for Hist {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     for (idx, val) in self.0.iter().enumerate().skip_while(|&(_, &val)| val == 0) {
-      writeln!(f, "{} => {}", idx, val)?;
+      write!(f, "{} => {}, ", idx, val)?;
     }
     Ok(())
   }

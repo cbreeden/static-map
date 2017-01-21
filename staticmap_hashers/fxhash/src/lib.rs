@@ -35,24 +35,28 @@ pub struct FxHasher {
     hash: usize
 }
 
+#[derive(Debug)]
 pub struct FxHashBuilder {
-    key:  usize,
+    pub key:  usize,
 }
 
 impl BuildHasher for FxHashBuilder {
     type Hasher = FxHasher;
+    #[inline]
     fn build_hasher(&self) -> Self::Hasher {
         FxHasher::with_key(self.key)
     }
 }
 
 impl Default for FxHashBuilder {
+    #[inline]
     fn default() -> FxHashBuilder {
         FxHashBuilder { key: K }
     }
 }
 
 impl FxHashBuilder {
+    #[inline]
     pub fn with_key(key: usize) -> FxHashBuilder {
         FxHashBuilder { key: key }
     }

@@ -5,12 +5,13 @@ authors = ["Christopher Breeden <github@u.breeden.cc>"]
 build = "build/build.rs"
 
 [dependencies]
-fnv = "1.0.5"
 serde = "0.8"
 serde_json = "0.8"
 serde_derive = "0.8"
 phf="0.7"
 lazy_static = "0.2.2"
+staticmap_hashers = { path = "staticmap_hashers" }
+staticmap = { path = "staticmap" }
 
 [build-dependencies]
 phf_codegen="0.7"

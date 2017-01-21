@@ -3,24 +3,27 @@
 
 extern crate phf;
 extern crate test;
-extern crate fnv;
 
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
 
+extern crate staticmap_hashers;
+extern crate staticmap;
+
 #[macro_use]
 extern crate lazy_static;
 
-mod fxhash;
-mod hashmap;
+use staticmap_hashers::fxhash;
+use staticmap_hashers::fxhash::FxHashBuilder;
+use staticmap::Map;
+
 mod testdata;
 mod hist;
 
 #[cfg(test)]
 use test::Bencher;
 
-use hashmap::Map;
 use testdata::Glyph;
 #[cfg(test)]
 use testdata::GLYPHS;
@@ -32,25 +35,6 @@ include!(concat!(env!("OUT_DIR"), "/phf.rs"));
 // FX_GLYPHS
 include!(concat!(env!("OUT_DIR"), "/fx.rs"));
 
-// FX_INLINE_MAP
-include!(concat!(env!("OUT_DIR"), "/fx_inline.rs"));
-
-// FNV_MAP
-// FNV_GLYPHS
-include!(concat!(env!("OUT_DIR"), "/fnv.rs"));
-
-#[bench]
-fn fx_inline(b: &mut Bencher) {
-  b.iter(|| {
-    for &(code, glyph) in GLYPHS.iter() {
-      if let Some(&g) = FX_INLINE_MAP.get(&code) {
-        if g.unicode != glyph.unicode {
-          panic!("");
-        }
-      }
-    }
-  })
-}
 
 #[bench]
 fn fx(b: &mut Bencher) {
@@ -58,21 +42,6 @@ fn fx(b: &mut Bencher) {
     for &(code, glyph) in GLYPHS.iter() {
       if let Some(&idx) = FX_MAP.get(&code) {
         let g = FX_GLYPHS[idx];
-        if g.unicode != glyph.unicode {
-          panic!("");
-        }
-      }
-    }
-  })
-}
-
-#[bench]
-fn fnv(b: &mut Bencher) {
-  b.iter(|| {
-
-    for &(code, glyph) in GLYPHS.iter() {
-      if let Some(&idx) = FNV_MAP.get(&code) {
-        let g = FNV_GLYPHS[idx];
         if g.unicode != glyph.unicode {
           panic!("");
         }

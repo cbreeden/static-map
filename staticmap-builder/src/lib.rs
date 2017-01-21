@@ -3,6 +3,7 @@ use std::mem;
 use std::marker::PhantomData;
 use std::fmt;
 use std::fmt::Display;
+use std::fmt::Debug;
 use std::hash::Hash;
 use std::hash::Hasher;
 use std::hash::BuildHasher;
@@ -25,7 +26,7 @@ pub struct Builder<K, V, S> {
 impl<K, V, S> Builder<K, V, S>
     where K: Hash + Default + Eq + Display,
           V: Default + Display,
-          S: BuildHasher {
+          S: BuildHasher + Debug {
   pub fn with_capacity(size: u32, hasher: S) -> Builder<K, V, S> {
     // Builder size must be a power of two.
     let cap = cmp::max((size * 10/9).next_power_of_two() as usize, MIN_TABLE_SIZE);
@@ -103,7 +104,7 @@ impl<K, V, S> Builder<K, V, S>
     }
 
     write!(f, "  ],\n")?;
-    write!(f, "  _hasher: ::std::marker::PhantomData,")?;
+    write!(f, "  hasher: {:?},", self.hasher)?;
     write!(f, "}};\n\n")
   }
 

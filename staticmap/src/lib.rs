@@ -1,8 +1,6 @@
 use std::hash::Hash;
 use std::hash::Hasher;
 use std::hash::BuildHasher;
-use std::fmt::Debug;
-use std::marker::PhantomData;
 
 pub struct Map<K: 'static, V: 'static, S: BuildHasher> {
   pub hasher:   S,
@@ -19,9 +17,10 @@ impl<K, V, S> Map<K, V, S> where K: Hash + Eq, S: BuildHasher {
     self.entries.len() == 0
   }
 
+  #[inline]
   pub fn get(&self, key: &K) -> Option<&V> {
     let mask = self.len() - 1;
-    let hash = Self::hash(key);
+    let hash = self.hash(key);
     let mut pos  = hash & mask;
     let mut dist = 0;
 
@@ -74,7 +73,8 @@ impl<K, V, S> Map<K, V, S> where K: Hash + Eq, S: BuildHasher {
   //   }
   // }
 
-  fn hash(key: &K) -> usize {
+  #[inline]
+  fn hash(&self, key: &K) -> usize {
     let mut hasher = self.hasher.build_hasher();
     key.hash(&mut hasher);
     let hash =  hasher.finish() as usize;
