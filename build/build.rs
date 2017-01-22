@@ -51,10 +51,10 @@ fn make_fxstatic() {
     let mut file = BufWriter::new(File::create(&output).expect("fx.rs file"));
 
     let mut g: Vec<Glyph> = Vec::new();
-    let mut t = Builder::<u32, usize, _>::with_capacity(GLYPHS.len() as u32, fxhash::FxHashBuilder::default());
+    let mut t = Builder::with_capacity(GLYPHS.len(), fxhash::FxHashBuilder::default());
 
     for &(code, glyph) in GLYPHS.iter() {
-        t.insert(code, g.len());
+        t.insert(code, display!(g.len()));
         g.push(glyph);
     }
 

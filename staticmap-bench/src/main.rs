@@ -12,10 +12,7 @@ use staticmap_builder::Builder;
 use staticmap_hashers::fxhash;
 
 use std::fs::File;
-
 use hist::Hist;
-
-
 
 #[derive(Deserialize, Debug)]
 struct ListInt(Vec<u32>);
@@ -31,7 +28,7 @@ fn main() {
     // }
 
     let mut score = (0, 10.0);
-    for _ in 0..100000 {
+    for _ in 0..1000 {
         let seed = new_key();
         //print!("Key: {:<20}, ", seed);
         let result = test_hash(&glyphs.0[..], seed, false);
@@ -45,13 +42,17 @@ fn main() {
     test_hash(&glyphs.0[..], score.0, true);
 }
 
+macro_rules! display {
+    ($expr:expr) => (format!("{}", $expr))
+}
+
 fn test_hash(keys: &[u32], seed: usize, print: bool) -> f32 {
     let mut h = Hist::new();
     let builder = fxhash::FxHashBuilder::with_key(seed);
-    let mut t = Builder::<u32, u32, _>::with_capacity(keys.len() as u32, builder);
+    let mut t = Builder::with_capacity(keys.len(), builder);
     for &code in keys.iter() {
-        let probe = t.insert(code, code);
-        h.insert(probe as u32);
+        let probe = t.insert(code, display!(code));
+        h.insert(probe);
     }
 
     let avg = h.average();

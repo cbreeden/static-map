@@ -1,6 +1,7 @@
 use std::hash::Hash;
 use std::hash::Hasher;
 use std::hash::BuildHasher;
+use std::borrow::Borrow;
 
 pub struct Map<K: 'static, V: 'static, S: BuildHasher> {
   pub hasher:   S,
@@ -9,16 +10,23 @@ pub struct Map<K: 'static, V: 'static, S: BuildHasher> {
 }
 
 impl<K, V, S> Map<K, V, S> where K: Hash + Eq, S: BuildHasher {
+  #[inline]
   pub fn len(&self) -> usize {
     self.entries.len()
   }
 
+  #[inline]
   pub fn is_empty(&self) -> bool {
     self.entries.len() == 0
   }
 
   #[inline]
   pub fn get(&self, key: &K) -> Option<&V> {
+    self.get_entry(key).map(|(_,v)| v)
+  }
+
+  #[inline]
+  fn get_entry(&self, key: &K) -> Option<(&'static K, &'static V)> {
     let mask = self.len() - 1;
     let hash = self.hash(key);
     let mut pos  = hash & mask;
@@ -29,7 +37,7 @@ impl<K, V, S> Map<K, V, S> where K: Hash + Eq, S: BuildHasher {
       if entry_hash == hash {
         let entry = unsafe { self.entries.get_unchecked(pos) };
         if entry.0 == *key {
-          return Some(&entry.1)
+          return Some((&entry.0, &entry.1))
         }
       }
 
@@ -73,7 +81,6 @@ impl<K, V, S> Map<K, V, S> where K: Hash + Eq, S: BuildHasher {
   //   }
   // }
 
-  #[inline]
   fn hash(&self, key: &K) -> usize {
     let mut hasher = self.hasher.build_hasher();
     key.hash(&mut hasher);
