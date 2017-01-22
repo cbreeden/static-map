@@ -1,5 +1,6 @@
 use std::cmp;
 use std::mem;
+use std::default::Default;
 use std::fmt;
 use std::fmt::Display;
 use std::fmt::Debug;
@@ -10,29 +11,22 @@ use std::io;
 
 const MIN_TABLE_SIZE: usize = 32;
 
-#[derive(Default, Debug)]
-pub struct Entry<K> {
-  pub key:   K,
-  pub value: String,
-}
-
-pub struct Builder<K, S> {
+pub struct Builder<K, V, S> {
   pub hashes:  Vec<usize>,
-  pub entries: Vec<Entry<K>>,
+  pub entries: Vec<(K, V)>,
   pub hasher:  S,
 }
 
-impl<K, S> Builder<K, S>
-    where K: Hash + Eq + Default + Display,
+impl<K, V, S> Builder<K, V, S>
+    where K: Hash + Eq + Default + Debug,
+          V: Default + Debug,
           S: BuildHasher + Debug {
-  pub fn with_capacity(size: usize, hasher: S) -> Builder<K, S> {
+  pub fn with_capacity(size: usize, hasher: S) -> Builder<K, V, S> {
     // Builder size must be a power of two.
     let cap = cmp::max((size * 10/9).next_power_of_two(), MIN_TABLE_SIZE);
     let mut entries = Vec::with_capacity(cap);
 
-    for _ in 0..cap {
-      entries.push(Entry::<K>::default());
-    }
+    for _ in 0..cap { entries.push(<(K,V) as Default>::default()); }
 
     Builder {
       hashes:  vec![0; cap],
@@ -41,16 +35,13 @@ impl<K, S> Builder<K, S>
     }
   }
 
-  pub fn insert(&mut self, key: K, value: String) -> usize {
+  pub fn insert(&mut self, key: K, value: V) -> usize {
     let mask = self.entries.len() - 1;
     let mut hash = self.hash(&key);
     let mut pos  = hash & mask;
     let mut dist = 0;
 
-    let mut entry = Entry {
-      key:   key,
-      value: value,
-    };
+    let mut entry = (key, value);
 
     loop {
       let probe_hash = unsafe { self.hashes.get_unchecked_mut(pos) };
@@ -92,7 +83,7 @@ impl<K, S> Builder<K, S>
     write!(f, "  ],\n  entries: &[  \n")?;
 
     for entry in self.entries.iter() {
-        write!(f, "{}, ", entry)?;
+        write!(f, "{:?}, ", entry)?;
     }
 
     write!(f, "  ],\n")?;
@@ -105,12 +96,5 @@ impl<K, S> Builder<K, S>
     key.hash(&mut hasher);
     let hash =  hasher.finish() as usize;
     if hash == 0 { 1 } else { hash }
-  }
-}
-
-impl<K> fmt::Display for Entry<K>
-    where K: fmt::Display {
-  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    write!(f, "({}, {})", self.key, self.value)
   }
 }
