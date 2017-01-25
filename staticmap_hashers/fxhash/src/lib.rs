@@ -8,6 +8,10 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 #![allow(dead_code)]
+extern crate byteorder;
+
+use byteorder::NativeEndian;
+use byteorder::ByteOrder;
 
 use std::collections::{HashMap, HashSet};
 use std::default::Default;
@@ -84,9 +88,13 @@ impl FxHasher {
 impl Hasher for FxHasher {
     #[inline]
     fn write(&mut self, bytes: &[u8]) {
-        for byte in bytes {
-            let i = *byte;
-            self.add_to_hash(i as usize);
+        let mut cursor = 0;
+        let len = bytes.len();
+        while cursor < len {
+            let size = ::std::cmp::min(8, len-cursor);
+            let n = NativeEndian::read_uint(&bytes[cursor..], size);
+            self.add_to_hash(n as usize);
+            cursor += 8;
         }
     }
 

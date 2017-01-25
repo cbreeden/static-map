@@ -12,6 +12,7 @@ phf="0.7"
 lazy_static = "0.2.2"
 staticmap_hashers = { path = "staticmap_hashers" }
 staticmap = { path = "staticmap" }
+fnv = "1.0"
 
 [build-dependencies]
 phf_codegen="0.7"

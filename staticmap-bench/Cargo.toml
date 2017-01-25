@@ -11,3 +11,4 @@ staticmap-builder = { path = "../staticmap-builder" }
 staticmap_hashers = { path = "../staticmap_hashers" }
 rand = "0.3"
 rayon = "0.6"
+lazy_static = "*"

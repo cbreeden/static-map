@@ -18,13 +18,16 @@ mod test_data;
 
 use test_data::Glyph;
 use test_data::GLYPHS;
+use test_data::SYMBOLS;
 use staticmap_builder::Builder;
 use staticmap_hashers::fxhash;
 
 fn main() {
-    // make_phfset();
+    make_phf();
+    make_phfsymbols();
     // make_fnvstatic();
     make_fxstatic();
+    make_fxsymbols();
     // make_fxinline();
 }
 
@@ -32,19 +35,39 @@ macro_rules! display {
     ($id:expr) => (format!("{}", $id))
 }
 
-// fn make_phfset() {
-//     let output = Path::new(&env::var_os("OUT_DIR").expect("OUT_DIR")).join("phf.rs");
-//     let mut file = BufWriter::new(File::create(&output).expect("phf.rs file"));
+fn make_phf() {
+    let output = Path::new(&env::var_os("OUT_DIR").expect("OUT_DIR")).join("phf.rs");
+    let mut file = BufWriter::new(File::create(&output).expect("phf.rs file"));
 
-//     let mut map = phf_codegen::Map::new();
-//     for &(code, glyph) in GLYPHS.iter() {
-//         map.entry(code, &display!(glyph));
-//     }
+    let mut map = phf_codegen::Map::new();
+    for &(code, glyph) in GLYPHS.iter() {
+        map.entry(code, &display!(glyph));
+    }
 
-//     write!(&mut file, "pub static PHF_MAP: phf::Map<u32, Glyph> = ").unwrap();
-//     map.build(&mut file).unwrap();
-//     write!(&mut file, ";\n").unwrap();
-// }
+    write!(&mut file, "pub static PHF_MAP: phf::Map<u32, Glyph> = ").unwrap();
+    map.build(&mut file).unwrap();
+    write!(&mut file, ";\n").unwrap();
+}
+
+fn make_phfsymbols() {
+    let output = Path::new(&env::var_os("OUT_DIR").expect("OUT_DIR")).join("phf_symbols.rs");
+    let mut file = BufWriter::new(File::create(&output).expect("fx.rs file"));
+
+    use serde_json::Value;
+    let mut map = phf_codegen::Map::new();
+    for (cmd, code) in SYMBOLS.iter() {
+        let code = match *code {
+            Value::U64(c) => c,
+            _ => panic!("Not a u64!"),
+        };
+
+        map.entry(&cmd[..], &display!(code));
+    }
+
+    write!(&mut file, "pub static PHF_SYMBOLS: phf::Map<&'static str, u32> = ").unwrap();
+    map.build(&mut file).unwrap();
+    write!(&mut file, ";\n").unwrap();
+}
 
 fn make_fxstatic() {
     let output = Path::new(&env::var_os("OUT_DIR").expect("OUT_DIR")).join("fx.rs");
@@ -65,6 +88,26 @@ fn make_fxstatic() {
     }
 
     write!(&mut file, "];").unwrap();
+}
+
+fn make_fxsymbols() {
+    let output = Path::new(&env::var_os("OUT_DIR").expect("OUT_DIR")).join("fx_symbols.rs");
+    let mut file = BufWriter::new(File::create(&output).expect("fx.rs file"));
+
+    let mut t = Builder::with_capacity(SYMBOLS.len(), fxhash::FxHashBuilder::with_key(4830179035349360615));
+
+    use serde_json::Value;
+    for (cmd, code) in SYMBOLS.iter() {
+        let code = match *code {
+            Value::U64(c) => c,
+            _ => panic!("Not a u64!"),
+        };
+
+        t.insert(&cmd[..], code as u32);
+    }
+
+    write!(&mut file, "static FX_SYMBOLS: Map<&'static str, u32, fxhash::FxHashBuilder> = ").unwrap();
+    t.build(&mut file).unwrap();
 }
 
 // fn make_fnvstatic() {
