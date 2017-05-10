@@ -1,7 +1,0 @@
-[package]
-name = "staticmap_hashers"
-version = "0.1.0"
-authors = ["Christopher Breeden <github@u.breeden.cc>"]
-
-[dependencies]
-fxhash = { path = "fxhash" }
