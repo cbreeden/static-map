@@ -37,7 +37,7 @@ pub type FxHashSet<V> = HashSet<V, FxBuildHasher>;
 /// itself is much higher because it works on up to 8 bytes at a time.
 ///
 /// TODO: Reword this to be less rustc specific.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FxHasher {
     hash: usize
 }

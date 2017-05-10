@@ -2,24 +2,10 @@
 name = "static-map"
 version = "0.1.0"
 authors = ["Christopher Breeden <github@u.breeden.cc>"]
-build = "build/build.rs"
 
 [dependencies]
-serde = "0.8"
-serde_json = "0.8"
-serde_derive = "0.8"
 phf="0.7"
-lazy_static = "0.2.2"
-staticmap_hashers = { path = "staticmap_hashers" }
+fxhash = { path = "fxhash" }
 staticmap = { path = "staticmap" }
-fnv = "1.0"
-
-[build-dependencies]
-phf_codegen="0.7"
-serde = "0.8"
-serde_json = "0.8"
-serde_derive = "0.8"
-fnv = "1.0"
-lazy_static = "0.2.2"
 staticmap-builder = { path = "staticmap-builder" }
-staticmap_hashers = { path = "staticmap_hashers" }
+fnv = "1.0"

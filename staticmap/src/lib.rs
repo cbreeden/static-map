@@ -94,7 +94,7 @@ impl<K, V, S> Map<K, V, S>
         let mut hasher = self.hasher.build_hasher();
         key.hash(&mut hasher);
         let hash = hasher.finish() as usize;
-        if hash == 0 { 1 } else { hash }
+        hash | 1
     }
 }
 

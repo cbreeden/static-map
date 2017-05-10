@@ -1,13 +1,9 @@
 use std::cmp;
-use std::mem;
 use std::default::Default;
-use std::fmt;
-use std::fmt::Display;
 use std::fmt::Debug;
-use std::hash::Hash;
-use std::hash::Hasher;
-use std::hash::BuildHasher;
+use std::hash::{BuildHasher, Hash, Hasher};
 use std::io;
+use std::mem;
 
 const MIN_TABLE_SIZE: usize = 32;
 
@@ -20,7 +16,7 @@ pub struct Builder<K, V, S> {
 impl<K, V, S> Builder<K, V, S>
     where K: Hash + Eq + Default + Debug,
           V: Default + Debug,
-          S: BuildHasher + Debug
+          S: Hasher + Debug + Clone
 {
     pub fn with_capacity(size: usize, hasher: S) -> Builder<K, V, S> {
         // Builder size must be a power of two.
@@ -39,21 +35,26 @@ impl<K, V, S> Builder<K, V, S>
     }
 
     pub fn insert(&mut self, key: K, value: V) -> usize {
+        // The mask yields the number of trailing bits of a
+        // hash key which yeilds its ideal position.
         let mask = self.entries.len() - 1;
         let mut hash = self.hash(&key);
+        let mut entry = (key, value);
+
         let mut pos = hash & mask;
         let mut dist = 0;
 
-        let mut entry = (key, value);
-
         loop {
-            let probe_hash = unsafe { self.hashes.get_unchecked_mut(pos) };
+            if dist > self.entries.len() {
+                panic!("Something wen't wrong.  Unable to find empty bucket.");
+            }
+
+            let probe_hash = &mut self.hashes[pos];
 
             // Found an empty bucket.  Place hash and return.
             if *probe_hash == 0 {
-                let probe = unsafe { self.entries.get_unchecked_mut(pos) };
                 *probe_hash = hash;
-                *probe = entry;
+                self.entries[pos] = entry;
                 return dist;
             }
 
@@ -63,8 +64,8 @@ impl<K, V, S> Builder<K, V, S>
             let probe_dist = pos.wrapping_sub(*probe_hash) & mask;
 
             if probe_dist < dist {
-                let probe = unsafe { self.entries.get_unchecked_mut(pos) };
-                mem::swap(probe, &mut entry);
+                let probe_entry = &mut self.entries[pos];
+                mem::swap(probe_entry, &mut entry);
                 mem::swap(probe_hash, &mut hash);
                 dist = probe_dist;
             }
@@ -95,9 +96,9 @@ impl<K, V, S> Builder<K, V, S>
     }
 
     fn hash(&self, key: &K) -> usize {
-        let mut hasher = self.hasher.build_hasher();
+        let mut hasher = self.hasher.clone();
         key.hash(&mut hasher);
         let hash = hasher.finish() as usize;
-        if hash == 0 { 1 } else { hash }
+        hash | 1
     }
 }
