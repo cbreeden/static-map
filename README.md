@@ -37,7 +37,7 @@ pub fn rgb_from_str(color: &str) -> Option<RGB> {
 }
 ```
 Notice that `Default: RGB(0, 0, 0),`.  This is required since we are initializing an array which will contain empty slots.
-We need a default value for those slots and you declare it as such.
+We need a default value for those slots and you declare it as such.  PHF maps do not require this since they are, well, perfect.
 
 ## Benchmarks
 
