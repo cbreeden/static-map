@@ -1,9 +1,9 @@
 # Static Map
 
 A static round-robin hashmap implementation, using the same hasher found in rustc. This is currently written using
-a bang variant of procedural macros that is only avialable at nightly at the moment.  Procedural macros are currently
+a bang variant of procedural macros that is only avialable in nightly at the moment.  Procedural macros are currently
 in active development, so I woulnd't expect any kind of stability here for the moment.  This was just an exercise
-to gain experience for how procedural macro development may be.
+to gain experience for how procedural macro development may become.
 
 ## Example
 
@@ -56,7 +56,7 @@ test bench_staticmap ... bench:       1,142 ns/iter (+/- 84)
 
 ### Codepoints
 
-This benchmark contains about 4500 `u8 -> GlyphMetrics` entries.
+This benchmark contains about 4500 `u32 -> GlyphMetrics` entries.
 
 ```
 test bench_phf       ... bench:      43,097 ns/iter (+/- 769)
