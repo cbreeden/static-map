@@ -15,6 +15,9 @@ use std::default::Default;
 use std::hash::{Hasher, Hash, BuildHasherDefault};
 use std::ops::BitXor;
 
+extern crate byteorder;
+use byteorder::{ByteOrder, NativeEndian};
+
 /// A builder for default Fx hashers.
 pub type FxBuildHasher = BuildHasherDefault<FxHasher>;
 
@@ -63,7 +66,24 @@ impl FxHasher {
 
 impl Hasher for FxHasher {
     #[inline]
-    fn write(&mut self, bytes: &[u8]) {
+    fn write(&mut self, mut bytes: &[u8]) {
+        #[cfg(target_pointer_width = "32")]
+        fn read(buf: &[u8]) -> usize {
+            NativeEndian::read_u32(buf) as usize
+        }
+
+        #[cfg(target_pointer_width = "64")]
+        fn read(buf: &[u8]) -> usize {
+            NativeEndian::read_u64(buf) as usize
+        }
+
+        let ptr_size: usize = ::std::mem::size_of::<usize>();
+        while bytes.len() >= ptr_size {
+            let i = read(bytes);
+            self.add_to_hash(i as usize);
+            bytes = bytes.split_at(ptr_size).1;
+        }
+
         for byte in bytes {
             let i = *byte;
             self.add_to_hash(i as usize);
@@ -110,7 +130,7 @@ impl Hasher for FxHasher {
 }
 
 /// A helper function.
-
+#[inline]
 pub fn hash<T: Hash>(v: &T) -> u64 {
     let mut state = FxHasher::default();
     v.hash(&mut state);

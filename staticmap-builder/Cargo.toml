@@ -1,6 +1,0 @@
-[package]
-name = "staticmap-builder"
-version = "0.1.0"
-authors = ["Christopher Breeden <github@u.breeden.cc>"]
-
-[dependencies]

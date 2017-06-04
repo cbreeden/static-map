@@ -6,3 +6,10 @@ authors = ["cbreeden <github@u.breeden.cc>"]
 [lib]
 name = "fxhash"
 path = "lib.rs"
+
+[[bench]]
+name = "fxhash"
+path = "bench.rs"
+
+[dependencies]
+byteorder = "*"
