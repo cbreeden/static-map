@@ -42,7 +42,7 @@ pub type FxHashSet<V> = HashSet<V, FxBuildHasher>;
 /// TODO: Reword this to be less rustc specific.
 #[derive(Debug, Clone)]
 pub struct FxHasher {
-    hash: usize
+    hash: usize,
 }
 
 impl Default for FxHasher {
@@ -131,7 +131,7 @@ impl Hasher for FxHasher {
 
 /// A helper function.
 #[inline]
-pub fn hash<T: Hash>(v: &T) -> u64 {
+pub fn hash<T: Hash + ?Sized>(v: &T) -> u64 {
     let mut state = FxHasher::default();
     v.hash(&mut state);
     state.finish()

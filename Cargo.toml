@@ -1,10 +1,2 @@
-[package]
-name = "static-map"
-version = "0.1.0"
-authors = ["Christopher Breeden <github@u.breeden.cc>"]
-
-[dependencies]
-phf="0.7"
-fnv = "1.0"
-fxhash = { path = "fxhash" }
-staticmap = { path = "staticmap" }
+[workspace]
+members = ["fxhash", "staticmap", "staticmap_derive"]

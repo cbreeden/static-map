@@ -1,0 +1,18 @@
+[package]
+name = "staticmap-macro"
+version = "0.1.0"
+authors = ["Christopher Breeden <github@u.breeden.cc>"]
+
+[dependencies]
+syn = "*"
+quote = "*"
+itoa = "*"
+fxhash = { path = "../fxhash" }
+staticmap = { path = "../staticmap" }
+
+[dev-dependencies]
+phf = "*"
+phf_macros = "*"
+
+[lib]
+proc-macro = true

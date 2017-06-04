@@ -1,21 +1,17 @@
+extern crate fxhash;
 use std::hash::Hash;
-use std::hash::Hasher;
-use std::hash::BuildHasher;
+use std::borrow::Borrow;
 
-pub struct Map<K: 'static, V: 'static, S: BuildHasher> {
+pub struct Map<'a, K: 'a, V: 'a> {
     #[doc(hidden)]
-    pub hasher: S,
-
-    #[doc(hidden)]
-    pub hashes: &'static [usize],
+    pub hashes: &'a [usize],
 
     #[doc(hidden)]
-    pub entries: &'static [(K, V)],
+    pub entries: &'a [(K, V)],
 }
 
-impl<K, V, S> Map<K, V, S>
-    where K: Hash + Eq,
-          S: BuildHasher
+impl<'a, K, V> Map<'a, K, V>
+    where K: Hash + Eq
 {
     #[inline]
     pub fn len(&self) -> usize {
@@ -28,16 +24,22 @@ impl<K, V, S> Map<K, V, S>
     }
 
     #[inline]
-    pub fn get(&self, key: &K) -> Option<&'static V> {
+    pub fn get<Q: ?Sized>(&self, key: &Q) -> Option<&'a V>
+        where K: Borrow<Q>,
+              Q: Hash + Eq
+    {
         self.get_entry(key).map(|(_, v)| v)
     }
 
     #[inline]
-    pub fn get_entry(&self, key: &K) -> Option<(&'static K, &'static V)> {
+    pub fn get_entry<Q: ?Sized>(&self, key: &Q) -> Option<(&'a K, &'a V)>
+        where K: Borrow<Q>,
+              Q: Hash + Eq
+    {
         assert!(self.entries.len().is_power_of_two(),
                 "Invalid StaticMap.  The pool must be a power of two.");
-        assert!(self.entries.len() >= 32,
-                "Invalid StaticMap.  The pool must have size >= 32.");
+        assert!(self.entries.len() >= 16,
+                "Invalid StaticMap.  The pool must have size >= 16.");
 
         // The mask yields the number of trailing bits of a
         // hash key which yeilds its ideal position.
@@ -53,7 +55,7 @@ impl<K, V, S> Map<K, V, S>
             // Hash match found
             if entry_hash == hash {
                 let entry = &self.entries[pos];
-                if entry.0 == *key {
+                if key.eq(entry.0.borrow()) {
                     return Some((&entry.0, &entry.1));
                 }
             }
@@ -90,10 +92,11 @@ impl<K, V, S> Map<K, V, S>
     //  pub fn contains_key<Q: ?Sized>(&self, k: &Q) -> bool ... {}
     //# pub fn get_mut<Q: ..>(&mut self, k: &Q) -> Option<&mut V> ... {}
 
-    fn hash(&self, key: &K) -> usize {
-        let mut hasher = self.hasher.build_hasher();
-        key.hash(&mut hasher);
-        let hash = hasher.finish() as usize;
+    fn hash<Q: ?Sized>(&self, key: &Q) -> usize
+        where K: Borrow<Q>,
+              Q: Hash + Eq
+    {
+        let hash = fxhash::hash(key) as usize;
         hash | 1
     }
 }
@@ -103,3 +106,13 @@ impl<K, V, S> Map<K, V, S>
 // impl Eq for HashMap
 // impl Index for HashMap
 // impl IntoIterator for &'a HashMap
+
+#[macro_export]
+macro_rules! static_map {
+    (Default: $default:expr, $($key:expr => $value:expr,)* $(,)*) => ({
+        ::staticmap_macros::static_map_macro!(
+            Default: @$default@
+            $($key @$value@ )*
+        )
+    })
+}
