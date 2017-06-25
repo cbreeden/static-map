@@ -5,3 +5,4 @@ authors = ["Christopher Breeden <github@u.breeden.cc>"]
 
 [dependencies]
 fxhash = { path = "../fxhash" }
+seahash = "*"

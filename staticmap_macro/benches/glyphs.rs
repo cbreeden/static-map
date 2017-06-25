@@ -1,9 +1,10 @@
-#![feature(plugin)]
-#![feature(proc_macro)]
 #![feature(test)]
+#![feature(plugin)]
 #![plugin(phf_macros)]
+#![allow(dead_code)]
 
 extern crate phf;
+#[macro_use]
 extern crate staticmap_macro;
 #[macro_use]
 extern crate staticmap;

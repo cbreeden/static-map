@@ -1,107 +1,105 @@
-#![feature(proc_macro)]
-extern crate proc_macro;
 extern crate fxhash;
-extern crate syn;
-extern crate itoa;
+extern crate proc_macro;
+#[macro_use]
 extern crate quote;
+extern crate syn;
 
-mod builder;
-
-use std::str::FromStr;
-use builder::Builder;
 use proc_macro::TokenStream;
-use syn::parse::IResult;
-use syn::parse;
+use syn::Delimited;
+use syn::Token;
+use syn::TokenTree;
 
-#[proc_macro]
-pub fn static_map_macro(input: TokenStream) -> TokenStream {
-    let s = input.to_string();
-    build_static_map(&s)
+#[macro_use]
+mod macros;
+mod builder;
+use builder::Builder;
+
+type Key<'a> = &'a syn::Lit;
+type Value<'a> = &'a syn::TokenTree;
+
+const LEADING: &str = "enum __StaticMap__ {\n    A =\n        static_map!(@ zero ";
+const TRAILING: &str = "),\n}";
+
+fn trim(input: &str) -> &str {
+    assert!(input.starts_with(LEADING));
+    assert!(input.ends_with(TRAILING));
+
+    let (_, input) = input.split_at(LEADING.len());
+    let (input, _) = input.split_at(input.len() - TRAILING.len());
+    input
 }
 
-fn build_static_map(input: &str) -> TokenStream {
-    let (mut input, default_value) = extract_default(input);
+#[proc_macro_derive(StaticMapMacro)]
+pub fn static_map_macro(input: TokenStream) -> TokenStream {
+    let s = input.to_string();
+    let result = build_static_map(trim(&s));
 
-    let mut key_values: Vec<(syn::Lit, String)> = Vec::new();
-    while let Some(tup) = extract_key_value(input) {
-        input = tup.0;
-        key_values.push((tup.1, tup.2));
-    }
-
-    let mut builder = Builder::with_capacity(key_values.len());
-
-    let default_key = {
-        let default_key = key_values.get(0)
-            .expect("staticmap! requires at least one key/value pair");
-        lit_default(&default_key.0)
+    let wrapper = quote! {
+        macro_rules! __static_map__construct_map {
+            () => ( #result )
+        }
     };
 
-    for (key, value) in key_values {
+    wrapper.parse().unwrap()
+}
+
+fn build_static_map(input: &str) -> quote::Tokens {
+    let tt = syn::parse_token_trees(input).unwrap();
+
+    // Extract the defualt value, which should be first token listed
+    let default_value = &tt[0];
+    let tt = &tt[1..];
+
+    // (Key (Value)) pairs follow
+    let mut builder = Builder::with_capacity(tt.len());
+    for pair in tt {
+        let pair  = expect_delimited!(pair);
+        let key   = expect_lit!(&pair[0]);
+        let value = &pair[1];
         builder.insert(key, value);
     }
 
-    let result = builder.build(default_key, &default_value);
-    // panic!(result);
-    TokenStream::from_str(&result).unwrap()
+    // Determine the default value for hashmap keys
+    // TODO: Here we might be able to determine default
+    // values for certain values.
+    let default_key = match tt.get(0) {
+        Some(pair) => {
+            let pair = expect_delimited!(pair);
+            let key  = expect_lit!(&pair[0]);
+            lit_default(key)
+        }
+        _ => panic!("staticmap! requires at least one key/value pair"),
+    };
+
+    builder.build(&default_key, default_value)
 }
 
-fn extract_key_value(s: &str) -> Option<(&str, syn::Lit, String)> {
-    let (s, lit) =
-        match parse::lit(s) {
-            IResult::Done(i, o) => (i, o),
-            _ => return None,
-        };
-
-    let mut split= s.splitn(3, '@').skip(1);
-    let value = split.next()
-        .expect("staticmap! syntax error -- unable to find value associated to key")
-        .to_owned();
-
-    let rest = split.next().unwrap_or("");
-    Some((rest, lit, value))
-}
-
-fn extract_default(s: &str) -> (&str, String) {
-    let mut split = s.splitn(3, '@');
-
-    let default = split.next().map(|v| v.trim());
-    if default != Some("Default :") {
-        panic!("staticmap! requires a `Default: <expr>,` for a default value");
-    }
-
-    let value = split.next()
-        .expect("staticmap! insufficient content provided")
-        .to_string();
-
-    let rest = split.next()
-        .expect("staticmap! requires at least one key/value pair");
-
-    (rest, value)
-}
-
-fn lit_default(lit: &syn::Lit) -> &'static str {
+fn lit_default(lit: &syn::Lit) -> syn::Lit {
     use syn::Lit::*;
+    use syn::Lit;
+
     match *lit {
-        Str(_, _) => r#""""#,
-        ByteStr(_, _) => "[]",
-        Byte(_) => "0u8",
-        Char(_) => "0 as char",
+        Str(_, _) => Lit::from(""),
+        // ByteStr(_, _) => "[]",
+        Byte(_) => Lit::from(0u8),
+        Char(_) => Lit::from(0 as char),
         Int(_, ty) => {
             use syn::IntTy::*;
+            use syn::IntTy;
             match ty {
-                Isize => "0isize",
-                I8 => "0i8",
-                I16 => "0i16",
-                I32 => "0i32",
-                I64 => "0i64",
-                Usize => "0usize",
-                U8 => "0u8",
-                U16 => "0u16",
-                U32 => "0u32",
-                U64 => "0u64",
-                Unsuffixed => "0",
+                Isize => Lit::from(0isize),
+                I8 => Lit::from(0i8),
+                I16 => Lit::from(0i16),
+                I32 => Lit::from(0i32),
+                I64 => Lit::from(0i64),
+                Usize => Lit::from(0usize),
+                U8 => Lit::from(0u8),
+                U16 => Lit::from(0u16),
+                U32 => Lit::from(0u32),
+                U64 => Lit::from(0u64),
+                Unsuffixed => Lit::Int(0, IntTy::Unsuffixed),
             }
         },
-        _ => panic!("staticmap! unsupported key type"),
+        ref lit => panic!("staticmap! unsupported key type `{:?}`", lit),
     }
 }

@@ -2,20 +2,22 @@
 use std::cmp;
 use std::mem;
 
-use syn;
-use quote::Tokens;
-use quote::ToTokens;
 use fxhash;
+use quote;
+use syn;
+
+use Key;
+use Value;
 
 const MIN_TABLE_SIZE: usize = 16;
 
-pub struct Builder {
+pub struct Builder<'a> {
     pub hashes: Vec<usize>,
-    pub entries: Vec<Option<(syn::Lit, String)>>,
+    pub entries: Vec<Option<(Key<'a>, Value<'a>)>>,
 }
 
-impl Builder {
-    pub fn with_capacity(size: usize) -> Builder {
+impl<'a> Builder<'a> {
+    pub fn with_capacity(size: usize) -> Builder<'a> {
         let cap = cmp::max((size / 9 * 10).next_power_of_two(), MIN_TABLE_SIZE);
 
         Builder {
@@ -24,7 +26,7 @@ impl Builder {
         }
     }
 
-    pub fn insert(&mut self, key: syn::Lit, value: String) {
+    pub fn insert(&mut self, key: Key<'a>, value: Value<'a>) {
         assert!(self.entries.len().is_power_of_two());
 
         let mask = self.entries.len() - 1;
@@ -59,51 +61,46 @@ impl Builder {
                 dist = probe_dist;
             }
 
-            pos = (pos + 1) & mask;
+            pos = pos.wrapping_add(1) & mask;
             dist += 1;
         }
     }
 
-    pub fn build(&self, default_key: &str, default_value: &str) -> String {
-        let mut result = String::new();
+    pub fn build(self, default_key: Key, default_value: Value) -> quote::Tokens {
+        let hashes  = self.hashes;
+        let entries = self.entries
+            .into_iter()
+            .map(|opt| opt.unwrap_or((default_key, default_value)));
 
-        result += "Map {\n    hashes: &[ ";
-        for hash in &self.hashes {
-            result += &format!("{}usize, ", hash);
-        }
-
-        result += "],\n    entries: &[ \n";
-        for entry in &self.entries {
-            match entry {
-                &Some( (ref key, ref value) ) => {
-                    let mut toks = Tokens::new();
-                    key.to_tokens(&mut toks);
-                    let key = toks.parse::<String>().unwrap();
-
-                    result += &format!("({}, {}), ", key, value);
-                },
-                _ => result += &format!("({}, {}), ", default_key, default_value),
+        quote! {
+            Map {
+                hashes: &[ #(#hashes),* ],
+                entries: &[ #(#entries),* ],
             }
         }
-
-        result += "],\n}\n\n";
-        result
     }
 }
 
 fn hash(key: &syn::Lit) -> usize {
     use syn::Lit;
-    let hash = match key {
-        &Lit::Str(ref s, _) => fxhash::hash(s),
-        &Lit::ByteStr(ref v, _) => fxhash::hash(v),
-        &Lit::Byte(n) => fxhash::hash(&n),
-        &Lit::Char(c) => fxhash::hash(&c),
-        &Lit::Int(n, _) => fxhash::hash(&n),
-        k => {
+    let hash = match *key {
+        Lit::Str(ref s, _) => _hash(s),
+        Lit::ByteStr(ref v, _) => _hash(v),
+        Lit::Byte(n) => _hash(&n),
+        Lit::Char(c) => _hash(&c),
+        Lit::Int(n, _) => _hash(&n),
+        ref k => {
             let err = format!("Unsupported key type: `{:?}`", k);
             panic!(err);
         }
     };
 
-    hash as usize | 1
+    hash
+}
+
+use std::hash::Hash;
+fn _hash<Q: ?Sized>(key: &Q) -> usize
+    where Q: Hash + Eq
+{
+    fxhash::hash(key) as usize | 1
 }

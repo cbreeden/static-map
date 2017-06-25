@@ -78,7 +78,7 @@ impl<'a, K, V> Map<'a, K, V>
                 return None;
             }
 
-            pos = (pos + 1) & mask;
+            pos = pos.wrapping_add(1) & mask;
             dist += 1;
         }
     }
@@ -96,8 +96,7 @@ impl<'a, K, V> Map<'a, K, V>
         where K: Borrow<Q>,
               Q: Hash + Eq
     {
-        let hash = fxhash::hash(key) as usize;
-        hash | 1
+        fxhash::hash(key) as usize | 1
     }
 }
 
@@ -109,10 +108,20 @@ impl<'a, K, V> Map<'a, K, V>
 
 #[macro_export]
 macro_rules! static_map {
-    (Default: $default:expr, $($key:expr => $value:expr,)* $(,)*) => ({
-        ::staticmap_macros::static_map_macro!(
-            Default: @$default@
-            $($key @$value@ )*
-        )
-    })
+    (Default: $default:expr, $($key:expr => $value:expr),* $(,)*) => (
+        static_map!(@stringify ($default) $( ($key ($value)) )*)
+    );
+
+    // This trick for stringifying into a procedural macro was
+    // developed by dtonley in the proc-macro-hack crate.
+    (@stringify $($tt:tt)*) => ({
+        #[derive(StaticMapMacro)]
+        enum __StaticMap__ {
+            A = static_map!(@zero $($tt)*)
+        }
+
+        __static_map__construct_map!()
+    });
+
+    (@zero $($tt:tt)*) => { 0 }
 }

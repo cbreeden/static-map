@@ -47,11 +47,11 @@ Keep that in mind, here are some benchmarks (found in `staticmap_macro/benches`)
 
 ### CSS Colors
 
-This contains about 150 `&str -> RGB(u8, u8, u8)` entries (like in the example above).  
+This contains about 150 `&str -> RGB(u8, u8, u8)` entries (like in the example above).
 
 ```
-test bench_phf       ... bench:       1,869 ns/iter (+/- 106)
-test bench_staticmap ... bench:       1,142 ns/iter (+/- 84)
+test bench_phf       ... bench:       2,027 ns/iter (+/- 224)
+test bench_staticmap ... bench:         935 ns/iter (+/- 90)
 ```
 
 ### Codepoints
@@ -59,8 +59,8 @@ test bench_staticmap ... bench:       1,142 ns/iter (+/- 84)
 This benchmark contains about 4500 `u32 -> GlyphMetrics` entries.
 
 ```
-test bench_phf       ... bench:      43,097 ns/iter (+/- 769)
-test bench_staticmap ... bench:      12,688 ns/iter (+/- 353)
+test bench_phf       ... bench:      44,502 ns/iter (+/- 3,971)
+test bench_staticmap ... bench:      13,097 ns/iter (+/- 2,768)
 ```
 
 ### TeX Symbols
@@ -68,6 +68,6 @@ test bench_staticmap ... bench:      12,688 ns/iter (+/- 353)
 This benchmark contains about 2500 `&str -> u32` entries, mapping tex symbols to codepoints.
 
 ```
-test bench_phf       ... bench:      39,305 ns/iter (+/- 629)
-test bench_staticmap ... bench:      50,887 ns/iter (+/- 894)
+test bench_phf       ... bench:      39,779 ns/iter (+/- 17,061)
+test bench_staticmap ... bench:      62,253 ns/iter (+/- 3,834)
 ```

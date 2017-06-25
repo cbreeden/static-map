@@ -9,6 +9,7 @@ quote = "*"
 itoa = "*"
 fxhash = { path = "../fxhash" }
 staticmap = { path = "../staticmap" }
+seahash = "*"
 
 [dev-dependencies]
 phf = "*"
