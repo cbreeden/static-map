@@ -2,6 +2,7 @@ extern crate fxhash;
 use std::hash::Hash;
 use std::borrow::Borrow;
 
+#[derive(Debug, Copy, Clone)]
 pub struct Map<'a, K: 'a, V: 'a> {
     #[doc(hidden)]
     pub hashes: &'a [usize],
@@ -44,7 +45,7 @@ impl<'a, K, V> Map<'a, K, V>
         // The mask yields the number of trailing bits of a
         // hash key which yeilds its ideal position.
         let mask = self.len() - 1;
-        let hash = self.hash(key);
+        let hash = Self::hash(key);
 
         let mut pos = hash & mask;
         let mut dist = 0;
@@ -83,16 +84,35 @@ impl<'a, K, V> Map<'a, K, V>
         }
     }
 
-    //	pub fn keys(&self) -> Keys<K, V> {}
-    //  pub fn values(&self) -> Values<K, V> {}
-    //# pub fn values_mut(&mut self) -> ValuesMut<K, V> {}
-    //  pub fn iter(&self) -> Iter<K, V> {}
-    //# pub fn iter_mut(&mut self) -> IterMut<K, V> {}
-    //  pub fn entry(&mut self, key: K) -> Entry<K, V> {}
-    //  pub fn contains_key<Q: ?Sized>(&self, k: &Q) -> bool ... {}
-    //# pub fn get_mut<Q: ..>(&mut self, k: &Q) -> Option<&mut V> ... {}
+    #[inline]
+    pub fn entries(&self) -> Entries<'a, K, V> {
+        Entries {
+            cursor: 0,
+            hashes: self.hashes,
+            entries: self.entries,
+        }
+    }
 
-    fn hash<Q: ?Sized>(&self, key: &Q) -> usize
+    #[inline]
+    pub fn keys(&self) -> Keys<'a, K, V> {
+        Keys { entries: self.entries() }
+    }
+
+    #[inline]
+    pub fn values(&self) -> Values<'a, K, V> {
+        Values { entries: self.entries() }
+    }
+
+    #[inline]
+    pub fn contains_key<Q: ?Sized>(&self, key: &Q) -> bool
+        where K: Borrow<Q>,
+              Q: Hash + Eq
+    {
+        self.get_entry(key).is_some()
+    }
+
+    #[inline]
+    fn hash<Q: ?Sized>(key: &Q) -> usize
         where K: Borrow<Q>,
               Q: Hash + Eq
     {
@@ -100,11 +120,59 @@ impl<'a, K, V> Map<'a, K, V>
     }
 }
 
-// impl Clone for HashMap
-// impl PartialEq for HashMap
-// impl Eq for HashMap
-// impl Index for HashMap
-// impl IntoIterator for &'a HashMap
+pub struct Entries<'a, K: 'a, V: 'a> {
+    cursor: usize,
+    hashes: &'a [usize],
+    entries: &'a [(K, V)],
+}
+
+impl<'a, K: 'a, V: 'a> Iterator for Entries<'a, K, V> {
+    type Item = &'a (K, V);
+    fn next(&mut self) -> Option<Self::Item> {
+        while self.cursor < self.hashes.len() {
+            if self.hashes[self.cursor] != 0 {
+                let result = Some(&self.entries[self.cursor]);
+                self.cursor += 1;
+                return result;
+            }
+            self.cursor += 1
+        }
+
+        None
+    }
+}
+
+pub struct Keys<'a, K: 'a, V: 'a> {
+    entries: Entries<'a, K, V>,
+}
+
+impl<'a, K: 'a, V: 'a> Iterator for Keys<'a, K, V> {
+    type Item = &'a K;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.entries.next().map(|entry| &entry.0)
+    }
+}
+
+pub struct Values<'a, K: 'a, V: 'a> {
+    entries: Entries<'a, K, V>,
+}
+
+impl<'a, K: 'a, V: 'a> Iterator for Values<'a, K, V> {
+    type Item = &'a V;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.entries.next().map(|entry| &entry.1)
+    }
+}
+
+impl<'a, K: 'a, V: 'a> IntoIterator for Map<'a, K, V>
+    where K: Hash + Eq
+{
+    type Item = &'a (K, V);
+    type IntoIter = Entries<'a, K, V>;
+    fn into_iter(self) -> Entries<'a, K, V> {
+        self.entries()
+    }
+}
 
 #[macro_export]
 macro_rules! static_map {

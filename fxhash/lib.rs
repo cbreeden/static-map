@@ -143,6 +143,7 @@ impl Hasher for FxHasher {
 }
 
 /// A convenience function for when you need a quick hash.
+#[inline]
 pub fn hash<T: Hash + ?Sized>(v: &T) -> u64 {
     let mut state = FxHasher::default();
     v.hash(&mut state);

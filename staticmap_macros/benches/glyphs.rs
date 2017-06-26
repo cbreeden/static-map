@@ -9477,26 +9477,8 @@ static KEYS: &[u32] =
       126641u32, 126642u32, 126643u32, 126644u32, 126645u32, 126646u32, 126647u32, 126648u32,
       126649u32, 126650u32, 126651u32];
 
-// #[bench]
-// fn a_size(b: &mut Bencher) {
-//     let hashes = std::mem::size_of_val(GLYPHS_STATICMAP.hashes);
-//     let entries = std::mem::size_of_val(GLYPHS_STATICMAP.entries);
-//     panic!("Static Size: {}", hashes + entries);
-// }
-macro_rules! get_static {
-    ($slice:expr) => ({
-        match $slice {
-            phf::Slice::Static(s) => s,
-            _ => panic!("not statice")
-        }
-    })
-}
-
 #[bench]
 fn bench_phf(b: &mut Bencher) {
-    let hashes = std::mem::size_of_val(get_static!(GLYPHS_PHF.disps));
-    let entries = std::mem::size_of_val(get_static!(GLYPHS_PHF.entries));
-    panic!("Static Size: {}", hashes + entries);
     let keys = black_box(KEYS);
 
     b.iter(|| {
