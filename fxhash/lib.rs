@@ -8,7 +8,22 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-//#![deny(missing_docs)]
+#![deny(missing_docs)]
+
+//! # Fx Hash
+//!
+//! This hashing algorithm was extracted from the Rustc compiler.  This is the same hashing
+//! algoirthm used for some internal operations in FireFox.  The strength of this algorithm
+//! is in hashing 8 bytes at a time on 64-bit platforms, where the FNV algorithm works on one
+//! byte at a time.
+//!
+//! ## Disclaimer
+//!
+//! It is **not a cryptographically secure** hash, so it is strongly recommended that you do
+//! not use this hash for cryptographic purproses.  Furthermore, this hashing algorithm was
+//! not designed to prevent any attacks for determining collisions which could be used to
+//! potentially cause quadratic behavior in `HashMap`s.  So it is not recommended to expose
+//! this hash in places where collissions or DDOS attacks may be a concern.
 
 use std::collections::{HashMap, HashSet};
 use std::default::Default;
@@ -27,19 +42,13 @@ pub type FxHashMap<K, V> = HashMap<K, V, FxBuildHasher>;
 /// A `HashSet` using a default Fx hasher.
 pub type FxHashSet<V> = HashSet<V, FxBuildHasher>;
 
-/// A speedy hash algorithm used within rustc. The hashmap in libcollections
-/// by default uses SipHash which isn't quite as speedy as we want. In the
-/// compiler we're not really worried about DOS attempts, so we use a fast
-/// non-cryptographic hash.
+/// This hashing algorithm was extracted from the Rustc compiler.
+/// This is the same hashing algoirthm used for some internal operations in FireFox.
+/// The strength of this algorithm is in hashing 8 bytes at a time on 64-bit platforms,
+/// where the FNV algorithm works on one byte at a time.
 ///
-/// This is the same as the algorithm used by Firefox -- which is a homespun
-/// one not based on any widely-known algorithm -- though modified to produce
-/// 64-bit hash values instead of 32-bit hash values. It consistently
-/// out-performs an FNV-based hash within rustc itself -- the collision rate is
-/// similar or slightly worse than FNV, but the speed of the hash function
-/// itself is much higher because it works on up to 8 bytes at a time.
-///
-/// TODO: Reword this to be less rustc specific.
+/// This hashing algorithm should not be used for cryptographic, or in scenarios where
+/// DOS attacks are a concern.
 #[derive(Debug, Clone)]
 pub struct FxHasher {
     hash: usize,
