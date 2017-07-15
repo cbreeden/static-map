@@ -4,16 +4,16 @@ version = "0.1.0"
 authors = ["Christopher Breeden <github@u.breeden.cc>"]
 
 [dependencies]
-syn = "*"
-quote = "*"
-itoa = "*"
-fxhash = { path = "../fxhash" }
+syn = "0.11"
+quote = "0.3"
+itoa = "0.3"
+fxhash = "0.1"
 staticmap = { path = "../staticmap" }
-seahash = "*"
 
 [dev-dependencies]
-phf = "*"
-phf_macros = "*"
+phf = "0.7"
+phf_macros = "0.7"
+seahash = "3.0"
 
 [lib]
 proc-macro = true

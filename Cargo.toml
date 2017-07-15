@@ -1,2 +1,2 @@
 [workspace]
-members = ["fxhash", "staticmap", "staticmap_macros"]
+members = ["staticmap", "staticmap_macros"]
