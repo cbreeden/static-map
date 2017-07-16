@@ -51,7 +51,7 @@ Keep that in mind, here are some benchmarks (found in `static_map_macro/benches`
 This contains about 150 `&str -> RGB(u8, u8, u8)` entries (like in the example above).
 
 ```
-test bench_phf       ... bench:       2,027 ns/iter (+/- 224)
+test bench_phf        ... bench:       2,027 ns/iter (+/- 224)
 test bench_static_map ... bench:         935 ns/iter (+/- 90)
 ```
 
@@ -60,7 +60,7 @@ test bench_static_map ... bench:         935 ns/iter (+/- 90)
 This benchmark contains about 4500 `u32 -> GlyphMetrics` entries.
 
 ```
-test bench_phf       ... bench:      44,502 ns/iter (+/- 3,971)
+test bench_phf        ... bench:      44,502 ns/iter (+/- 3,971)
 test bench_static_map ... bench:      13,097 ns/iter (+/- 2,768)
 ```
 
