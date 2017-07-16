@@ -8,11 +8,10 @@ to gain experience for how procedural macro development may become.
 ## Example
 
 ```rust
-#![feature(proc_macro)]
-
 #[macro_use]
 extern crate staticmap;
-extern crate staticmap_macro;
+#[macro_use]
+extern crate staticmap_macros;
 
 use staticmap::Map;
 
@@ -38,6 +37,8 @@ pub fn rgb_from_str(color: &str) -> Option<RGB> {
 ```
 Notice that `Default: RGB(0, 0, 0),`.  This is required since we are initializing an array which will contain empty slots.
 We need a default value for those slots and you declare it as such.  PHF maps do not require this since they are, well, perfect.
+Also note that `#[macro_use]` is required for _both_ `staticmap` and `staticmap_macros`.  This is because `proc_macros` are not
+allowed to export items, so the `static_map!` macro lives in the `static_map` crate.
 
 ## Benchmarks
 

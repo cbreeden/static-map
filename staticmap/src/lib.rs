@@ -177,11 +177,11 @@ impl<'a, K: 'a, V: 'a> IntoIterator for Map<'a, K, V>
 #[macro_export]
 macro_rules! static_map {
     (Default: $default:expr, $($key:expr => $value:expr),* $(,)*) => (
-        static_map!(@stringify ($default) $( ($key ($value)) )*)
+        static_map!(@stringify $default $(@ $key ? $value )*)
     );
 
     // This trick for stringifying into a procedural macro was
-    // developed by dtonley in the proc-macro-hack crate.
+    // developed by dtolnay in the proc-macro-hack crate.
     (@stringify $($tt:tt)*) => ({
         #[derive(StaticMapMacro)]
         enum __StaticMap__ {

@@ -16,6 +16,14 @@ pub struct Builder<'a> {
     pub entries: Vec<Option<(Key<'a>, Value<'a>)>>,
 }
 
+macro_rules! tok_lit {
+    ($lit:expr) => ({
+        let mut t = quote::Tokens::new();
+        t.append($lit);
+        t
+    })
+}
+
 impl<'a> Builder<'a> {
     pub fn with_capacity(size: usize) -> Builder<'a> {
         let cap = cmp::max((size / 9 * 10).next_power_of_two(), MIN_TABLE_SIZE);
@@ -47,7 +55,7 @@ impl<'a> Builder<'a> {
             if *probe_hash == 0 {
                 *probe_hash = hash;
                 self.entries[pos] = Some(entry);
-                return
+                return;
             }
 
             // Check if current key has an ideal dist less than held hash.
@@ -67,13 +75,16 @@ impl<'a> Builder<'a> {
     }
 
     pub fn build(self, default_key: Key, default_value: Value) -> quote::Tokens {
-        let hashes  = self.hashes;
+        let hashes = self.hashes;
         let entries = self.entries
             .into_iter()
-            .map(|opt| opt.unwrap_or((default_key, default_value)));
+            .map(|opt| match opt {
+                     Some(opt) => (opt.0, tok_lit!(opt.1)),
+                     None => (default_key.clone(), tok_lit!(default_value)),
+                 });
 
         quote! {
-            Map {
+            staticmap::Map {
                 hashes: &[ #(#hashes),* ],
                 entries: &[ #(#entries),* ],
             }

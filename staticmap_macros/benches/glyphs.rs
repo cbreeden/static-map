@@ -5,7 +5,7 @@
 
 extern crate phf;
 #[macro_use]
-extern crate staticmap_macro;
+extern crate staticmap_macros;
 #[macro_use]
 extern crate staticmap;
 extern crate test;

@@ -1,5 +1,5 @@
 [package]
-name = "staticmap-macro"
+name = "staticmap_macros"
 version = "0.1.0"
 authors = ["Christopher Breeden <github@u.breeden.cc>"]
 
@@ -9,6 +9,8 @@ quote = "0.3"
 itoa = "0.3"
 fxhash = "0.1"
 staticmap = { path = "../staticmap" }
+time = "*"
+
 
 [dev-dependencies]
 phf = "0.7"
