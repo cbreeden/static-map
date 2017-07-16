@@ -17,7 +17,7 @@ use static_map::Map;
 #[derive(Debug, Clone, Copy)]
 struct RGB(u8, u8, u8);
 
-static CSS_COLORS_static_map: Map<&'static str, RGB> = static_map! {
+static CSS_COLORS_STATIC_MAP: Map<&'static str, RGB> = static_map! {
     Default: RGB(0x00,0x00,0x00),
     "black" => RGB(0x00,0x00,0x00),
     "silver" => RGB(0xc0,0xc0,0xc0),
@@ -488,7 +488,7 @@ fn bench_static_map(b: &mut Bencher) {
 
     b.iter(|| {
         for key in keys {
-            CSS_COLORS_static_map
+            CSS_COLORS_STATIC_MAP
                 .get(key)
                 .expect("static_map failed to find a valid key.");
         }
