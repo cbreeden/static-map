@@ -84,7 +84,7 @@ impl<'a> Builder<'a> {
                  });
 
         quote! {
-            staticmap::Map {
+            static_map::Map {
                 hashes: &[ #(#hashes),* ],
                 entries: &[ #(#entries),* ],
             }

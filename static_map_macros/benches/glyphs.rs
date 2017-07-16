@@ -5,15 +5,15 @@
 
 extern crate phf;
 #[macro_use]
-extern crate staticmap_macros;
+extern crate static_map_macros;
 #[macro_use]
-extern crate staticmap;
+extern crate static_map;
 extern crate test;
 
 use test::Bencher;
 use test::black_box;
 
-use staticmap::Map;
+use static_map::Map;
 
 struct Glyph {
     attachment: i32,
@@ -27,7 +27,7 @@ struct Glyph {
     max_y: i32,
 }
 
-static GLYPHS_STATICMAP: Map<u32, Glyph> = static_map! {
+static GLYPHS_static_map: Map<u32, Glyph> = static_map! {
     Default: Glyph { unicode: 0u32, attachment: 0i32, italics: 0i32, advance: 0i32, lsb: 0i32, min_x: 0i32, min_y: 0i32, max_x: 0i32, max_y: 0i32 },
     0u32 => Glyph { unicode: 0u32, attachment: 0i32, italics: 0i32, advance: 0i32, lsb: 0i32, min_x: 0i32, min_y: 0i32, max_x: 0i32, max_y: 0i32 },
     1u32 => Glyph { unicode: 1u32, attachment: 0i32, italics: 0i32, advance: 0i32, lsb: 0i32, min_x: 0i32, min_y: 0i32, max_x: 0i32, max_y: 0i32 },
@@ -9491,14 +9491,14 @@ fn bench_phf(b: &mut Bencher) {
 }
 
 #[bench]
-fn bench_staticmap(b: &mut Bencher) {
+fn bench_static_map(b: &mut Bencher) {
     let keys = black_box(KEYS);
 
     b.iter(|| {
         for key in keys {
-            GLYPHS_STATICMAP
+            GLYPHS_static_map
                 .get(key)
-                .expect("Staticmap failed to find a valid key.");
+                .expect("static_map failed to find a valid key.");
         }
     });
 }

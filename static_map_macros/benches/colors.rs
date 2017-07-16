@@ -4,20 +4,20 @@
 
 extern crate phf;
 #[macro_use]
-extern crate staticmap_macros;
+extern crate static_map_macros;
 #[macro_use]
-extern crate staticmap;
+extern crate static_map;
 extern crate test;
 
 use test::Bencher;
 use test::black_box;
 
-use staticmap::Map;
+use static_map::Map;
 
 #[derive(Debug, Clone, Copy)]
 struct RGB(u8, u8, u8);
 
-static CSS_COLORS_STATICMAP: Map<&'static str, RGB> = static_map! {
+static CSS_COLORS_static_map: Map<&'static str, RGB> = static_map! {
     Default: RGB(0x00,0x00,0x00),
     "black" => RGB(0x00,0x00,0x00),
     "silver" => RGB(0xc0,0xc0,0xc0),
@@ -483,14 +483,14 @@ fn bench_phf(b: &mut Bencher) {
 }
 
 #[bench]
-fn bench_staticmap(b: &mut Bencher) {
+fn bench_static_map(b: &mut Bencher) {
     let keys = black_box(KEYS);
 
     b.iter(|| {
         for key in keys {
-            CSS_COLORS_STATICMAP
+            CSS_COLORS_static_map
                 .get(key)
-                .expect("Staticmap failed to find a valid key.");
+                .expect("static_map failed to find a valid key.");
         }
     });
 }

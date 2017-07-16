@@ -9,11 +9,11 @@ to gain experience for how procedural macro development may become.
 
 ```rust
 #[macro_use]
-extern crate staticmap;
+extern crate static_map;
 #[macro_use]
-extern crate staticmap_macros;
+extern crate static_map_macros;
 
-use staticmap::Map;
+use static_map::Map;
 
 #[derive(Clone, Copy)]
 struct RGB(u8, u8, u8);
@@ -37,14 +37,14 @@ pub fn rgb_from_str(color: &str) -> Option<RGB> {
 ```
 Notice that `Default: RGB(0, 0, 0),`.  This is required since we are initializing an array which will contain empty slots.
 We need a default value for those slots and you declare it as such.  PHF maps do not require this since they are, well, perfect.
-Also note that `#[macro_use]` is required for _both_ `staticmap` and `staticmap_macros`.  This is because `proc_macros` are not
+Also note that `#[macro_use]` is required for _both_ `static_map` and `static_map_macros`.  This is because `proc_macros` are not
 allowed to export items, so the `static_map!` macro lives in the `static_map` crate.
 
 ## Benchmarks
 
 The idea is that a static round-robin hashmap maybe more efficient than PHF for certain datasets.  The trade-off is that a PHF hashmap
 implementation is nearly optimal with respect to memory efficiency; `static_map!` may use upto 2x as much memory in the worst case scenario.
-Keep that in mind, here are some benchmarks (found in `staticmap_macro/benches`).
+Keep that in mind, here are some benchmarks (found in `static_map_macro/benches`).
 
 ### CSS Colors
 
@@ -52,7 +52,7 @@ This contains about 150 `&str -> RGB(u8, u8, u8)` entries (like in the example a
 
 ```
 test bench_phf       ... bench:       2,027 ns/iter (+/- 224)
-test bench_staticmap ... bench:         935 ns/iter (+/- 90)
+test bench_static_map ... bench:         935 ns/iter (+/- 90)
 ```
 
 ### Codepoints
@@ -61,7 +61,7 @@ This benchmark contains about 4500 `u32 -> GlyphMetrics` entries.
 
 ```
 test bench_phf       ... bench:      44,502 ns/iter (+/- 3,971)
-test bench_staticmap ... bench:      13,097 ns/iter (+/- 2,768)
+test bench_static_map ... bench:      13,097 ns/iter (+/- 2,768)
 ```
 
 ### TeX Symbols
@@ -70,5 +70,5 @@ This benchmark contains about 2500 `&str -> u32` entries, mapping tex symbols to
 
 ```
 test bench_phf       ... bench:      39,779 ns/iter (+/- 17,061)
-test bench_staticmap ... bench:      62,253 ns/iter (+/- 3,834)
+test bench_static_map ... bench:      62,253 ns/iter (+/- 3,834)
 ```

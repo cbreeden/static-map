@@ -1,2 +1,2 @@
 [workspace]
-members = ["staticmap", "staticmap_macros"]
+members = ["static_map", "static_map_macros"]
