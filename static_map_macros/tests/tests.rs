@@ -1,14 +1,14 @@
 #[macro_use]
-extern crate staticmap_macros;
+extern crate static_map_macros;
 #[macro_use]
-extern crate staticmap;
+extern crate static_map;
 
-use staticmap::Map;
+use static_map::Map;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct RGB(u8, u8, u8);
 
-static CSS_COLORS_STATICMAP: Map<&'static str, RGB> = static_map! {
+static CSS_COLORS_STATIC_MAP: Map<&'static str, RGB> = static_map! {
     Default: RGB(0x00,0x00,0x00),
     "black" => RGB(0x00,0x00,0x00),
     "silver" => RGB(0xc0,0xc0,0xc0),
@@ -311,7 +311,7 @@ static KEYS: &[&str] = &["black",
 
 #[test]
 fn test_entries_iter() {
-    let mut entries = CSS_COLORS_STATICMAP
+    let mut entries = CSS_COLORS_STATIC_MAP
         .entries()
         .map(|entry| &entry.0)
         .collect::<Vec<_>>();
@@ -325,7 +325,7 @@ fn test_entries_iter() {
 #[test]
 fn test_keys_iter() {
     let mut keys = KEYS.iter().collect::<Vec<_>>();
-    let mut map_keys = CSS_COLORS_STATICMAP.keys().collect::<Vec<_>>();
+    let mut map_keys = CSS_COLORS_STATIC_MAP.keys().collect::<Vec<_>>();
     keys.sort();
     map_keys.sort();
 
@@ -334,7 +334,7 @@ fn test_keys_iter() {
 
 #[test]
 fn test_into_iter() {
-    let entries = CSS_COLORS_STATICMAP.entries().collect::<Vec<_>>();
-    let intoiter = CSS_COLORS_STATICMAP.into_iter().collect::<Vec<_>>();
+    let entries = CSS_COLORS_STATIC_MAP.entries().collect::<Vec<_>>();
+    let intoiter = CSS_COLORS_STATIC_MAP.into_iter().collect::<Vec<_>>();
     assert_eq!(entries, intoiter);
 }
