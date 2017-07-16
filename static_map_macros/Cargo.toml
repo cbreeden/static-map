@@ -1,15 +1,19 @@
 [package]
 name = "static_map_macros"
 version = "0.1.0"
+description = "Procedural macro used for static_map."
+documentation = "https://docs.rs/static_map"
+readme = "README.md"
+keywords = [ "hash", "hashmap", "map", "static" ]
+categories = [ "data-structures" ]
+license = "Apache-2.0/MIT"
 authors = ["Christopher Breeden <github@u.breeden.cc>"]
 
 [dependencies]
 syn = "0.11"
 quote = "0.3"
-itoa = "0.3"
 fxhash = "0.1"
 static_map = { path = "../static_map" }
-time = "*"
 
 
 [dev-dependencies]

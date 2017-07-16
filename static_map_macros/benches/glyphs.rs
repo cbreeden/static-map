@@ -27,7 +27,7 @@ struct Glyph {
     max_y: i32,
 }
 
-static GLYPHS_static_map: Map<u32, Glyph> = static_map! {
+static GLYPHS_STATIC_MAP: Map<u32, Glyph> = static_map! {
     Default: Glyph { unicode: 0u32, attachment: 0i32, italics: 0i32, advance: 0i32, lsb: 0i32, min_x: 0i32, min_y: 0i32, max_x: 0i32, max_y: 0i32 },
     0u32 => Glyph { unicode: 0u32, attachment: 0i32, italics: 0i32, advance: 0i32, lsb: 0i32, min_x: 0i32, min_y: 0i32, max_x: 0i32, max_y: 0i32 },
     1u32 => Glyph { unicode: 1u32, attachment: 0i32, italics: 0i32, advance: 0i32, lsb: 0i32, min_x: 0i32, min_y: 0i32, max_x: 0i32, max_y: 0i32 },
@@ -9496,7 +9496,7 @@ fn bench_static_map(b: &mut Bencher) {
 
     b.iter(|| {
         for key in keys {
-            GLYPHS_static_map
+            GLYPHS_STATIC_MAP
                 .get(key)
                 .expect("static_map failed to find a valid key.");
         }
