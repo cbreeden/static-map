@@ -38,7 +38,7 @@ pub fn rgb_from_str(color: &str) -> Option<RGB> {
 Notice that `Default: RGB(0, 0, 0),`.  This is required since we are initializing an array which will contain empty slots.
 We need a default value for those slots and you declare it as such.  PHF maps do not require this since they are, well, perfect.
 Also note that `#[macro_use]` is required for _both_ `static_map` and `static_map_macros`.  This is because `proc_macros` are not
-allowed to export items, so the `static_map!` macro lives in the `static_map` crate.
+allowed to export items, so the `static_map!` macro lives in the `static_map` crate. (Note: This is not entirely true, and may be fixed soon).
 
 ## Benchmarks
 
@@ -66,9 +66,9 @@ test bench_static_map ... bench:      13,097 ns/iter (+/- 2,768)
 
 ### TeX Symbols
 
-This benchmark contains about 2500 `&str -> u32` entries, mapping tex symbols to codepoints.
+This benchmark contains about 1500 `&str -> Symbol` entries, mapping tex symbols to codepoints.
 
 ```
-test bench_phf       ... bench:      39,779 ns/iter (+/- 17,061)
-test bench_static_map ... bench:      62,253 ns/iter (+/- 3,834)
+test bench_phf        ... bench:      20,382 ns/iter (+/- 133)
+test bench_static_map ... bench:      24,589 ns/iter (+/- 188)
 ```
