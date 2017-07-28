@@ -9,10 +9,15 @@ use syn;
 use Key;
 use Value;
 
+#[cfg(target_pointer_width = "32")]
+type Usize = u32;
+#[cfg(target_pointer_width = "64")]
+type Usize = u64;
+
 const MIN_TABLE_SIZE: usize = 16;
 
 pub struct Builder<'a> {
-    pub hashes: Vec<usize>,
+    pub hashes: Vec<Usize>,
     pub entries: Vec<Option<(Key<'a>, Value<'a>)>>,
 }
 
@@ -37,24 +42,24 @@ impl<'a> Builder<'a> {
     pub fn insert(&mut self, key: Key<'a>, value: Value<'a>) {
         assert!(self.entries.len().is_power_of_two());
 
-        let mask = self.entries.len() - 1;
+        let mask = self.entries.len() as Usize - 1;
         let mut hash = hash(&key);
         let mut entry = (key, value);
 
         let mut pos = hash & mask;
-        let mut dist = 0;
+        let mut dist: Usize = 0;
 
         loop {
-            if dist > self.entries.len() {
+            if dist > self.entries.len() as Usize {
                 panic!("staticmap! fatal error -- unable to find emptry bucket for key");
             }
 
-            let probe_hash = &mut self.hashes[pos];
+            let probe_hash = &mut self.hashes[pos as usize];
 
             // Found an empty bucket.
             if *probe_hash == 0 {
                 *probe_hash = hash;
-                self.entries[pos] = Some(entry);
+                self.entries[pos as usize] = Some(entry);
                 return;
             }
 
@@ -63,7 +68,7 @@ impl<'a> Builder<'a> {
             let probe_dist = pos.wrapping_sub(*probe_hash) & mask;
 
             if probe_dist < dist {
-                let probe_entry = self.entries[pos].as_mut().unwrap();
+                let probe_entry = self.entries[pos as usize].as_mut().unwrap();
                 mem::swap(probe_entry, &mut entry);
                 mem::swap(probe_hash, &mut hash);
                 dist = probe_dist;
@@ -75,7 +80,8 @@ impl<'a> Builder<'a> {
     }
 
     pub fn build(self, default_key: Key, default_value: Value) -> quote::Tokens {
-        let hashes = self.hashes;
+        panic!("0x{:x}", Usize::max_value());
+        let hashes = self.hashes.into_iter().map(|hash| hash as usize);
         let entries = self.entries
             .into_iter()
             .map(|opt| match opt {
@@ -92,7 +98,7 @@ impl<'a> Builder<'a> {
     }
 }
 
-fn hash(key: &syn::Lit) -> usize {
+fn hash(key: &syn::Lit) -> Usize {
     use syn::Lit;
     let hash = match *key {
         Lit::Str(ref s, _) => _hash(s),
@@ -110,8 +116,8 @@ fn hash(key: &syn::Lit) -> usize {
 }
 
 use std::hash::Hash;
-fn _hash<Q: ?Sized>(key: &Q) -> usize
+fn _hash<Q: ?Sized>(key: &Q) -> Usize
     where Q: Hash + Eq
 {
-    fxhash::hash(key) as usize | 1
+    fxhash::hash(key) as Usize | 1
 }
