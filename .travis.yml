@@ -54,9 +54,7 @@ matrix:
       os: osx
       rust: nightly
 
-before_install: 
-  - set -e
-  - cd static_map_macros
+before_install: set -e
 
 install:
   - sh ci/install.sh
