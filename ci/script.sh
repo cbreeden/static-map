@@ -11,8 +11,8 @@ main() {
         return
     fi
 
-    cross test --target $TARGET -p $CRATE_NAME
-    cross test --target $TARGET --release -p $CRATE_NAME
+    cross test --test tests --target $TARGET -p $CRATE_NAME
+    cross test --test tests --target $TARGET --release -p $CRATE_NAME
 }
 
 # we don't run the "test phase" when doing deploys
