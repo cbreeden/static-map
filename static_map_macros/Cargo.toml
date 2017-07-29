@@ -1,6 +1,6 @@
 [package]
 name = "static_map_macros"
-version = "0.2.0-alpha"
+version = "0.2.0-beta"
 repository = "https://github.com/cbreeden/static-map"
 description = "Procedural macro used for static_map."
 documentation = "https://docs.rs/static_map"
