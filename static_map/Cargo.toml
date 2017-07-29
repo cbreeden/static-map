@@ -1,6 +1,6 @@
 [package]
 name = "static_map"
-version = "0.1.1"
+version = "0.2.0-alpha"
 repository = "https://github.com/cbreeden/static-map"
 description = "A static hashmap implementation, based on the Round-Robin hashing algorithm found in rustc."
 documentation = "https://docs.rs/static_map"

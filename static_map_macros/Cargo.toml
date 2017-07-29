@@ -1,6 +1,6 @@
 [package]
 name = "static_map_macros"
-version = "0.1.1"
+version = "0.2.0-alpha"
 repository = "https://github.com/cbreeden/static-map"
 description = "Procedural macro used for static_map."
 documentation = "https://docs.rs/static_map"
@@ -16,7 +16,7 @@ quote = "0.3"
 fxhash = "0.2"
 
 [dev-dependencies]
-static_map = { version = "0.1", path = "../static_map" }
+static_map = "0.2.0-alpha"
 phf = "0.7"
 phf_macros = "0.7"
 seahash = "3.0"
