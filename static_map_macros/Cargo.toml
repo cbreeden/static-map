@@ -13,10 +13,10 @@ authors = ["Christopher Breeden <github@u.breeden.cc>"]
 [dependencies]
 syn = "0.11"
 quote = "0.3"
-fxhash = "0.1"
+fxhash = "0.2"
 
 [dev-dependencies]
-static_map = "0.1"
+static_map = { version = "0.1", path = "../static_map" }
 phf = "0.7"
 phf_macros = "0.7"
 seahash = "3.0"

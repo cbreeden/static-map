@@ -5,7 +5,7 @@ use std::borrow::Borrow;
 #[derive(Debug, Copy, Clone)]
 pub struct Map<'a, K: 'a, V: 'a> {
     #[doc(hidden)]
-    pub hashes: &'a [usize],
+    pub hashes: &'a [u32],
 
     #[doc(hidden)]
     pub entries: &'a [(K, V)],
@@ -47,7 +47,7 @@ impl<'a, K, V> Map<'a, K, V>
         let mask = self.len() - 1;
         let hash = Self::hash(key);
 
-        let mut pos = hash & mask;
+        let mut pos = hash as usize & mask;
         let mut dist = 0;
 
         loop {
@@ -74,7 +74,7 @@ impl<'a, K, V> Map<'a, K, V>
             // is greater than distance from our key's ideal then
             // we know there is no match.  This is the key
             // characteristic of Robin-Hood hashing.
-            let entry_dist = pos.wrapping_sub(entry_hash) & mask;
+            let entry_dist = pos.wrapping_sub(entry_hash as usize) & mask;
             if dist > entry_dist {
                 return None;
             }
@@ -112,17 +112,17 @@ impl<'a, K, V> Map<'a, K, V>
     }
 
     #[inline]
-    fn hash<Q: ?Sized>(key: &Q) -> usize
+    fn hash<Q: ?Sized>(key: &Q) -> u32
         where K: Borrow<Q>,
               Q: Hash + Eq
     {
-        fxhash::hash(key) as usize | 1
+        fxhash::hash64(key) as u32 | 1
     }
 }
 
 pub struct Entries<'a, K: 'a, V: 'a> {
     cursor: usize,
-    hashes: &'a [usize],
+    hashes: &'a [u32],
     entries: &'a [(K, V)],
 }
 

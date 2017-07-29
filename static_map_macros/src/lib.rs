@@ -36,6 +36,7 @@ pub fn static_map_macro(input: TokenStream) -> TokenStream {
     };
 
     wrapper.parse().unwrap()
+    // panic!("{}", wrapper.to_string());
 }
 
 fn build_static_map(input: &str) -> quote::Tokens {

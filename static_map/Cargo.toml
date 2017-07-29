@@ -11,4 +11,4 @@ license = "Apache-2.0/MIT"
 authors = ["Christopher Breeden <github@u.breeden.cc>"]
 
 [dependencies]
-fxhash = "0.1"
+fxhash = "0.2"
