@@ -12,8 +12,8 @@ use builder::Builder;
 type Key<'a> = syn::Lit;
 type Value<'a> = &'a str;
 
-const LEADING: &str = "enum __StaticMap__ {\n    A =\n        static_map!(@ zero";
-const TRAILING: &str = "),\n}";
+const LEADING: &str = "enum __StaticMap__\n{\n    A = static_map !\n    (@ zero";
+const TRAILING: &str = ")\n}";
 
 fn trim(input: &str) -> &str {
     assert!(input.starts_with(LEADING));
